@@ -34,8 +34,9 @@ def vstru2mw(vstru) :
             print('wj =', wj)
             mj = (indj[-1] + indj[0] + 1)/2
             print('mj =', mj)
+            print('indj[0] =', indj[0])
             mw = np.array([mj,wj,indj[0]])
-            print('mw =', dims)
+            print('mw =', mw)
        else :
            mw =  np.array([0,0,0])
            
@@ -44,9 +45,10 @@ def vstru2mw(vstru) :
         for j in range(sizs[0]):            
             indj,= np.where(vstru[j,:] >0)
             count = len(indj)
+            print('len =', count)
             if count > 0:
                 wj =  indj[-1] - indj[0] + 1
-                mj = (indj[-1] + indj[0] + 1)/2
+                mj = (indj[-1] + indj[0] + 1)/2  #Ist doch die Länge aber warum dann licht len()?
                 mw[j,:] = [mj,wj,indj[0]]
             else:
                 mw[j,:] =  [0,0,0]
@@ -56,11 +58,13 @@ def vstru2mw(vstru) :
 #"""
 #==========  test  ===========
 
-vstru = np.array([0,0,1,2,3,2,1,0,0])
+#vstru = np.array([0,0,1,2,3,2,1,0,0])
 #vstru = np.array([[0,0,1,2,3,2,1,0,0],[0,0,0,1,0,0,0,0,0],[0,1,1,2,1,1,1,0,0]])
+vstru = np.array([[0,0,1,2,0,2,1,0,0],[0,0,0,1,0,0,0,0,0],[0,1,1,2,1,1,1,1,0]])
     
 mw = vstru2mw(vstru)
 print(mw)
+print(vstru)
 #end
 #"""
 
