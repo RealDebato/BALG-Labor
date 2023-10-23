@@ -21,14 +21,21 @@ import numpy as np
 def vstru2mw(vstru) :
     
     dims = vstru.ndim
+    print('dims =', dims)
     sizs = vstru.shape
+    print('sizs =', sizs)
     if dims == 1:
        indj,  = np.where(vstru > 0)
+       print ('indj =', indj)
        count = len(indj)
+       print('count =', count)
        if count > 0 :
             wj =  indj[-1] - indj[0] + 1
+            print('wj =', wj)
             mj = (indj[-1] + indj[0] + 1)/2
+            print('mj =', mj)
             mw = np.array([mj,wj,indj[0]])
+            print('mw =', dims)
        else :
            mw =  np.array([0,0,0])
            
@@ -49,8 +56,8 @@ def vstru2mw(vstru) :
 #"""
 #==========  test  ===========
 
-#vstru = np.array([0,0,1,2,3,2,1,0,0])
-vstru = np.array([[0,0,1,2,3,2,1,0,0],[0,0,0,1,0,0,0,0,0],[0,1,1,2,1,1,1,0,0]])
+vstru = np.array([0,0,1,2,3,2,1,0,0])
+#vstru = np.array([[0,0,1,2,3,2,1,0,0],[0,0,0,1,0,0,0,0,0],[0,1,1,2,1,1,1,0,0]])
     
 mw = vstru2mw(vstru)
 print(mw)
