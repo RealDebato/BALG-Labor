@@ -13,24 +13,37 @@ import math
 #print('Beta =')
 #beta = input()
 
-#alpha = 1
-#beta = 1
+alpha = 5
+beta = 1
 
 
 def f(var, alpha, beta):
     fy = math.exp(-alpha*var) + pow(var, beta)
     return fy
 
+fu = f(1, alpha, beta)
 
-print(f(1, 1, 1))
+print(fu)
 
 
 #print(convFun(f, 0, 1, 0.001))
 
-def convFun(a, b, eps, alpha, beta, f):     # Intervall [a,b], Toleranz
-    e = b - a
-    #math.exp(-alpha*var) + pow(var, beta)
-    while e > eps:
+def convFun(a, b, eps):     # Intervall [a,b], Toleranz eps
+    
+    
+    #s_start = (b - a)/3
+    #x0_start = a
+    #x1_start = a + s_start
+    #x2_start = b - s_start
+    #x3_start = b
+
+    # Abbruchbedingung: Erst wenn in allen drei Segmenten die Differenz der benachbarten Stüzpunkten in y geringer wie die Toleranz ist, sind wir nah genug am Minimum.  
+    #e1 = abs(f(x0, 1, 1) - f(x1, 1, 1))
+    #e2 = abs(f(x1, 1, 1) - f(x2, 1, 1))
+    #e3 = abs(f(x2, 1, 1) - f(x3, 1, 1))
+
+
+    while True:
         # Grenzen der Trisektion bestimmen
         s = (b - a)/3
         x0 = a
@@ -38,33 +51,47 @@ def convFun(a, b, eps, alpha, beta, f):     # Intervall [a,b], Toleranz
         x2 = b - s
         x3 = b
 
-        Seg1 = ((math.exp(-alpha*x1) + pow(x1, beta) - math.exp(-alpha*x0) + pow(x0, beta))/2) + math.exp(-alpha*x0) + pow(x0, beta)
-        Seg2 = ((math.exp(-alpha*x2) + pow(x2, beta) - math.exp(-alpha*x1) + pow(x1, beta))/2) + math.exp(-alpha*x1) + pow(x1, beta)
-        Seg3 = ((math.exp(-alpha*x3) + pow(x3, beta) - math.exp(-alpha*x2) + pow(x2, beta))/2) + math.exp(-alpha*x2) + pow(x2, beta)
+        print('X[]', x0, x1, x2, x3)
 
-        print('Seg1 =', Seg1)
-        print('Seg2 =', Seg2)
-        print('Seg3 =', Seg3)
-        print('X0-3 =', x0, x1, x2, x3)
+        #Steigungen zwischen den Segmentgrenzen berechen
+        m_seg1 = (f(x1, alpha, beta) - f(x0, alpha, beta))/(x1 - x0)
+        m_seg2 = (f(x2, alpha, beta) - f(x1, alpha, beta))/(x2 - x1)
+        m_seg3 = (f(x3, alpha, beta) - f(x2, alpha, beta))/(x3 - x2)
 
-        if Seg1 > Seg2 < Seg3:
-            a = x1
-            b = x2
-        elif Seg1 < Seg2 and Seg1 < Seg3:
+        #print('m Seg', m_seg1, m_seg2, m_seg3),
+        M_Seg = [m_seg1, m_seg2, m_seg3]
+        print('M Seg =', M_Seg)
+        M_seg_direction = np.sign(M_Seg)
+        print('M Seg Direction =', M_seg_direction)
+
+        # Entsprechend der Steigungen eines der äußeren Segmente löschen
+        if np.array_equal(M_seg_direction, [-1,1,1]):
             a = x0
-            b = x1
-        else:
-            a = x2
+            b = x2
+        elif np.array_equal(M_seg_direction, [-1,-1,1]):
+            a = x1
             b = x3
+        else:
+            print('Im Interval wurde keine Minimum gefunden')
+            break
 
-        e = b - a
+        e1 = abs(f(x0, 1, 1) - f(x1, 1, 1))
+        e2 = abs(f(x1, 1, 1) - f(x2, 1, 1))
+        e3 = abs(f(x2, 1, 1) - f(x3, 1, 1))
 
-        print('e =', e)
+        e = (b - a)/2
 
-    return a + e/2
+        if (e1 < eps) & (e2 < eps) & (e3 < eps):
+            break
+        
+        
+        
+    fx_min = a + e/2
+    fy_min = f(a + e/2, 1, 1)
+    return fx_min, fy_min
 
 
-print('Min =', convFun(0, 1, 0.01, 2, 1, f(1,1,1)))
+print('Min(x, y) =', convFun(0, 1, 0.01))
 
 
 
