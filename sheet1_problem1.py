@@ -6,8 +6,8 @@
 import numpy as np
 import math
 
-alpha = 5
-beta = 5
+alpha = 1
+beta = 1
 
 
 def f(var, a, b):
@@ -44,7 +44,7 @@ def convFun(a, b, eps):     # Intervall [a,b], Toleranz eps
             a = x1
             b = x3
         else:                                                   # Funktion ist im Interval streng monoton 
-            print('Im Interval wurde keine Minimum gefunden')
+            print('Im Interval wurde keine Minimum gefunden! \nDas Minimum kann auch auf einer der Intervalgrenzen liegen.')
             return None
 
 
