@@ -5,18 +5,32 @@
 import numpy as np
 import math
 import scipy as sp
+import matplotlib.pyplot as plt
 
 # Erstellung zufälliger Zahlen
 
 
-def rand(a, b, i):                  # a = Kleinstes Element; b = größtes Element; i = Anzahl der Zufallszahlen
+def rand_n(a, b, i):                  # a = Kleinstes Element; b = größtes Element -1 ; i = Anzahl der Zufallszahlen
     Random = []
-    for i in range(i):
-        number = np.random.choice(np.arange(a, b))
-        Random = np.add(Random, number)
+    j = 0
+    for j in range(i):
+        number = np.random.choice(np.arange(a, b + 1))
+        Random = np.append(Random, number)
     return Random
 
-print(rand(0, 10, 100))
+print(rand_n(0, 10, 100))
+
+'''x = np.linspace(0,50,50)
+
+def gaussian_dist(x , mean , sig):
+    density = (np.pi*sig) * np.exp(-0.5*((x-mean)/sig)**2)
+    return density
 
 
-    
+Ran_Num = gaussian_dist(x, 25, 15)
+print(Ran_Num)
+
+
+plt.plot(x, Ran_Num , color = 'red')
+plt.xlabel('Data points')
+plt.ylabel('Probability Density')'''
