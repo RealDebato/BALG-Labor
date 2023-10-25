@@ -6,7 +6,7 @@
 import numpy as np
 import math
 
-alpha = 1
+alpha = 5
 beta = 1
 
 
@@ -48,9 +48,9 @@ def convFun(a, b, eps):     # Intervall [a,b], Toleranz eps
             return None
 
 
-        e1 = abs(f(x0, 1, 1) - f(x1, 1, 1))
-        e2 = abs(f(x1, 1, 1) - f(x2, 1, 1))
-        e3 = abs(f(x2, 1, 1) - f(x3, 1, 1))
+        e1 = abs(f(x0, alpha, beta) - f(x1, alpha, beta))
+        e2 = abs(f(x1, alpha, beta) - f(x2, alpha, beta))
+        e3 = abs(f(x2, alpha, beta) - f(x3, alpha, beta))
 
         e = (b - a)/2       
 
@@ -66,7 +66,7 @@ def convFun(a, b, eps):     # Intervall [a,b], Toleranz eps
 #---------------------------------------------------------------------------------------------------------------------------------------------------
 # Testing
 
-print('Min(x, y) =', convFun(0, 1, 0.001))
+print('Min(x, y) =', convFun(-1, 1, 0.0000001))
 
 
 
