@@ -6,17 +6,21 @@ import numpy as np
 import math
 import scipy as sp
 import matplotlib.pyplot as plt
+import time
+
+
+t_start = time.time()
 
 # Erstellung zufälliger Zahlen
 
 mean = 10
-sigma = 3
-cnt = 5
+sigma = 5
+cnt = 10
 
 data = np.random.normal(loc=mean, scale=sigma, size=cnt)
 
-print(data)
-print(len(data))
+#print(data)
+#print(len(data))
 
 
 #--------------------------------------------------------------------------------------------------------------------------------------------
@@ -25,38 +29,44 @@ print(len(data))
 def quicksort(numbers):
     
     pivot_delete = range(0, len(numbers))
+    m_numbers = numbers
 
     while True:
         low = []
         high = []
-        numbers_m = numbers
         p_pivot = np.random.choice(pivot_delete)
-        pivot = numbers[p_pivot]
-        print('Pivot, p_pivot =', pivot, p_pivot)
+        pivot = m_numbers[p_pivot]
+        #print('Pivot, p_pivot =', pivot, p_pivot)
         for i in range(0, len(numbers)):
             if pivot > numbers[i]:
                 low = np.append(low, numbers[i])
-                print('low =', low)
+                #print('low =', low)
             elif pivot < numbers[i]:
                 high = np.append(high, numbers[i])
-                print('high =', high)
+                #print('high =', high)
             else:
                 continue
         low = np.append(low, pivot)
         numbers = np.concatenate((low, high))
-        print('Numbers =', numbers)
-        pivot_delete = np.delete(pivot_delete, p_pivot)
-        print('pivot_delet', pivot_delete)
+        #print('Numbers =', numbers)
+        p_to_delete = np.where(pivot_delete == p_pivot)
+        #print('p_to_delete', p_to_delete)
+        pivot_delete = np.delete(pivot_delete, p_to_delete)
+        #print('pivot_delet', pivot_delete)
 
-        print('len(pivot_delete) =', len(pivot_delete))
+        #print('len(pivot_delete) =', len(pivot_delete))
 
         #break
 
         if len(pivot_delete) == 0:
             return numbers
 
+sorted = quicksort(data)
+print('sorted data:', sorted)
 
-print('sorted data:', quicksort(data))
+t_end_1 = time.time()
+
+print('Laufzeit Quicksort =', t_end_1 - t_start,'s')
                 
 
 
