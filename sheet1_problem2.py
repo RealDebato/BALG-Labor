@@ -9,28 +9,57 @@ import matplotlib.pyplot as plt
 
 # Erstellung zufälliger Zahlen
 
+mean = 10
+sigma = 3
+cnt = 5
 
-def rand_n(a, b, i):                  # a = Kleinstes Element; b = größtes Element -1 ; i = Anzahl der Zufallszahlen
-    Random = []
-    j = 0
-    for j in range(i):
-        number = np.random.choice(np.arange(a, b + 1))
-        Random = np.append(Random, number)
-    return Random
+data = np.random.normal(loc=mean, scale=sigma, size=cnt)
 
-print(rand_n(0, 10, 100))
-
-'''x = np.linspace(0,50,50)
-
-def gaussian_dist(x , mean , sig):
-    density = (np.pi*sig) * np.exp(-0.5*((x-mean)/sig)**2)
-    return density
+print(data)
+print(len(data))
 
 
-Ran_Num = gaussian_dist(x, 25, 15)
-print(Ran_Num)
+#--------------------------------------------------------------------------------------------------------------------------------------------
+# Funktionen zur Bestimmung des Interquartilsabstands
+
+def quicksort(numbers):
+    
+    pivot_delete = range(0, len(numbers))
+
+    while True:
+        low = []
+        high = []
+        numbers_m = numbers
+        p_pivot = np.random.choice(pivot_delete)
+        pivot = numbers[p_pivot]
+        print('Pivot, p_pivot =', pivot, p_pivot)
+        for i in range(0, len(numbers)):
+            if pivot > numbers[i]:
+                low = np.append(low, numbers[i])
+                print('low =', low)
+            elif pivot < numbers[i]:
+                high = np.append(high, numbers[i])
+                print('high =', high)
+            else:
+                continue
+        low = np.append(low, pivot)
+        numbers = np.concatenate((low, high))
+        print('Numbers =', numbers)
+        pivot_delete = np.delete(pivot_delete, p_pivot)
+        print('pivot_delet', pivot_delete)
+
+        print('len(pivot_delete) =', len(pivot_delete))
+
+        #break
+
+        if len(pivot_delete) == 0:
+            return numbers
 
 
-plt.plot(x, Ran_Num , color = 'red')
-plt.xlabel('Data points')
-plt.ylabel('Probability Density')'''
+print('sorted data:', quicksort(data))
+                
+
+
+ 
+#def interquart(numbers):
+    
