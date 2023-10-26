@@ -14,7 +14,7 @@ t_start = time.time()
 # Erstellung zufälliger Zahlen
 
 mean = 10
-sigma = 5
+sigma = 2
 cnt = 10
 
 data = np.random.normal(loc=mean, scale=sigma, size=cnt)
@@ -68,6 +68,25 @@ t_end_1 = time.time()
 
 print('Laufzeit Quicksort =', t_end_1 - t_start,'s')
                 
+def iqr(numbers):
+    # Median x1 des 1. Quartiels berechnen
+    if cnt % 4 == 0:
+        x1 = 0,5 * (numbers[cnt/4] + numbers[cnt/4 + 1])
+    else:
+        x1 = numbers[int(cnt/4 + 1)]
+    
+    # Median x3 des 3. Quartiels berechnen
+    if (cnt % 4) * 3 == 0:
+        x3 = 0,5 * (numbers[(cnt/4) * 3] + numbers[(cnt/4) * 3 + 1])
+    else:
+        x3 = numbers[int((cnt/4) * 3 + 1)]
+    print('x1 , x3 =', x1, x3)
+    
+    return x3 - x1
+
+
+print('IQR =', iqr(sorted))
+
 
 
  
