@@ -15,12 +15,13 @@ t_start = time.time()
 
 mean = 10
 sigma = 2
-cnt = 10
+cnt = 500
 
 data = np.random.normal(loc=mean, scale=sigma, size=cnt)
 
 #print(data)
 #print(len(data))
+
 
 
 #--------------------------------------------------------------------------------------------------------------------------------------------
@@ -62,7 +63,7 @@ def quicksort(numbers):
             return numbers
 
 sorted = quicksort(data)
-print('sorted data:', sorted)
+#print('sorted data:', sorted)
 
 t_end_1 = time.time()
 
@@ -70,19 +71,26 @@ print('Laufzeit Quicksort =', t_end_1 - t_start,'s')
                 
 def iqr(numbers):
     # Median x1 des 1. Quartiels berechnen
-    if cnt % 4 == 0:
-        x1 = 0,5 * (numbers[cnt/4] + numbers[cnt/4 + 1])
+    a = round(cnt/4)
+    b = round(cnt/4 * 3)
+ 
+   
+   
+   
+    if (cnt % 4) == 0:
+        print('Test bei cnt % 4 == 0')
+        x1 = 0.5 * (numbers[a] + numbers[a + 1])
     else:
-        x1 = numbers[int(cnt/4 + 1)]
+        x1 = numbers[a + 1]
     
     # Median x3 des 3. Quartiels berechnen
-    if (cnt % 4) * 3 == 0:
-        x3 = 0,5 * (numbers[(cnt/4) * 3] + numbers[(cnt/4) * 3 + 1])
+    if cnt % 4  == 0:  
+        x3 = 0.5 * (numbers[b] + numbers[b + 1])
     else:
-        x3 = numbers[int((cnt/4) * 3 + 1)]
+        x3 = numbers[b + 1]
     print('x1 , x3 =', x1, x3)
-    
-    return x3 - x1
+    IQR = x3 - x1
+    return IQR
 
 
 print('IQR =', iqr(sorted))
