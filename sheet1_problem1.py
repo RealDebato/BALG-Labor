@@ -6,8 +6,8 @@
 import numpy as np
 import math
 
-alpha = 5
-beta = 1
+alpha = 100
+beta = 5
 
 
 def f(var, a, b):
@@ -48,7 +48,7 @@ def convFun(a, b, eps):     # Intervall [a,b], Toleranz eps
             return None
 
 
-        e1 = abs(f(x0, alpha, beta) - f(x1, alpha, beta))
+        e1 = abs(f(x0, alpha, beta) - f(x1, alpha, beta))       # Abstände auch in X-Richtung abfragen
         e2 = abs(f(x1, alpha, beta) - f(x2, alpha, beta))
         e3 = abs(f(x2, alpha, beta) - f(x3, alpha, beta))
 
