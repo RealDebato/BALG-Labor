@@ -18,23 +18,23 @@ Kermit = cv2.imread('_Kermit.png', 0)
 cv2.imshow('Orginal Kermit', Kermit)
 #cv2.imshow('Orginal Smiley', Smiley)
 
-def hist(img):
+def hist_n(img):
     histogram = np.zeros(256)
     for i in range(0, img.shape[0]):
         for j in range(0, img.shape[1]):
             GV = img[i, j]
             histogram[GV] = histogram[GV] + 1
-    return histogram
+    histogram_normal = histogram/histogram.sum()
+    return histogram_normal
 
-Hist_Kermit = hist(Kermit)
-pixelanzahl = Kermit.shape[0] * Kermit.shape[1]
-max_px = max(Hist_Kermit)
+Histn_Kermit = hist_n(Kermit)
+max_px = max(Histn_Kermit)
 
-def Entropy(x):
-    if 0 < x/255 < 1:  
-        return x * math.log(1/x, 2)
-    else:
-        return 0
+def Entropy(p):
+    if p > 0:
+        E = -(p * np.log2(p)).sum()
+    return E
+
 
 
 def entropy_filter_slow(img, r):                 # img[col, row]
