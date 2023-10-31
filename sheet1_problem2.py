@@ -14,10 +14,10 @@ t_start = time.time()
 
 mean = 10
 sigma = 2
-cnt = 1000000
+cnt = 10
 
-data = np.random.normal(loc=mean, scale=sigma, size=cnt)
-#data = [8, 7, 2, 5, 4, 6, 1, 10, 11]
+#data = np.random.normal(loc=mean, scale=sigma, size=cnt)
+data = [8, 7, 2, 5, 4, 6]
 #print(data)
 
 #--------------------------------------------------------------------------------------------------------------------------------------------
@@ -31,11 +31,14 @@ def partition(A, low, high):
         if A[j] <= pivot:
             i = i + 1
             A[i], A[j] = A[j], A[i]
+            #print('i =', i)
+            #print('j =', j)
+            #print(A[i], A[j])
         
     A[i + 1], A[high] = A[high], A[i + 1]
-    #print('i =', i)
-    #print('j =', j)
-    #print('Numbers =', A)
+    
+    
+    print('Numbers =', A)
     return i + 1
 
 def quickSort(A, low, high):
@@ -134,7 +137,7 @@ print('Laufzeit Quicksort =', t_end_1 - t_start,'s')
 #------------------------------------------------------------------------------------------------------------
 # Berechnung IQR
                 
-def iqr(numbers):
+def iqr(numbers):                   # Für kleine Anzahl n nicht berechenbar
     # Median x1 des 1. Quartiels berechnen
     a = round(cnt/4)
     b = round(cnt/4 * 3)
@@ -150,7 +153,7 @@ def iqr(numbers):
         x3 = 0.5 * (numbers[b] + numbers[b + 1])
     else:
         x3 = numbers[b + 1]
-    #print('x1 , x3 =', x1, x3)
+    print('x1 , x3 =', x1, x3)
     IQR = x3 - x1
     return IQR
 
