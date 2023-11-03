@@ -9,11 +9,11 @@ import matplotlib.pyplot as plt
 #cv2.imshow('Orginal Kermit', Kermit)
 #Kermit = np.ones((100, 100)).astype('uint8')
 
-Kermit = np.array([[0, 0, 50, 0, 0],
-                  [0, 170, 180, 160, 0],
-                  [90, 210, 255, 190, 110],
-                  [0, 140, 190, 150, 0],
-                  [0, 0, 40, 0, 0]])
+Kermit = np.array([[5, 10, 50, 20, 3, 9],
+                  [15, 155, 180, 155, 12, 21],
+                  [100, 200, 255, 200, 100, 84],
+                  [35, 155, 180, 155, 16, 54],
+                  [55, 23, 50, 30, 7, 67]])
 
 print('Orginal Kermit\n',Kermit)
 
@@ -45,77 +45,14 @@ def Entropy(p):                                         # Argument sind die Wahr
 
 print(Entropy(Histn_Kermit))
 
+def entropy_local(img, x, y, r):
+       R = np.arange(-r, r + 1)
+       X, Y = np.meshgrid(R, R)
 
-def entropy_filter(img, r):                 # img[col, row]
-       
-       gv_core1 = []
-       gv_col1 = []
-       gv_col4 = []
-       m_img = img
-       
-       # Randberech erweitern
-       img = np.pad(array=img, pad_width=r, mode='constant', constant_values=0)
-       m_img = np.pad(array=m_img, pad_width=r, mode='constant', constant_values=0)
-       #print('Img Pad=', img)
+       # Meshgrid in kreisförmigen Kern wandeln
+       kernel = img[ np.sqrt((X - x)**2 + (Y - y)**2) <= r ]
+   
 
-
-       for i in range(r, img.shape[0] - r):             # Laufvariable durch das Bild in y-Richtung (Reihen)
-              for j in range(r, img.shape[1] - r):      # Laufvariable durch das Bild in x-Richtung (Spalten)
-
-                     # 1. Filterkern wird vollständig berechnet
-                     if j == r and i == r:                     
-                            for k in range(-r, r+1):           # k:=row      q:=col   
-                                   for q in range(-r, r+1):
-                                          gv = m_img[i + k, j + q]
-                                          gv_core1 = np.append(gv_core1, gv)
-
-                            print('gv_core1 =', gv_core1)
-                            E_core1 = Entropy(hist_n(gv_core1))
-                            print('E_core1 =', E_core1)
-                            m_pre_E_Core = E_core1
-                            img[r, r] = 32 * E_core1
-                            gv_core1 = []
-                            print('Ende i == r')
-                            print('-------------------------------------')
-                     else:
-                           continue 
-
-                     # 1. Col aus Core1 berechnen zur Subtraktion
-                     for n in range(-r, r+1):           
-                            gv = m_img[i + n, j - 1]
-                            gv_col1 = np.append(gv_col1, gv)
-                     m_col1 = gv_col1
-                     gv_col1 = []
-                     E_col1 = Entropy(hist_n(m_col1))   
-                               
-                     # 4. Col berechnen zur Addition am nächsten Pixel
-                     for s in range(-r, r + 1):                                      
-                            gv = m_img[j + s, i + r]
-                            gv_col4 = np.append(gv_col4, gv)
-                     m_col4 = gv_col4
-                     gv_col4 = []
-                     print('gv_col4 =', m_col4)
-                     print('---------------------------------')
-                     E_col4 = Entropy(hist_n(m_col4))
-
-                     m_E_Core = m_pre_E_Core + E_col4 - E_col1
-                     print('m_E_Core =', m_E_Core)
-                     img[i, j] = 32 * m_E_Core
-                     m_pre_E_Core = m_E_Core
-                     gv_col4 = []
-
-       return img
-
-                            
-'''gw = img[i + k, j + n]
-#print('gw(i + k, j + n) =', gw)
-gw = int(gw)
-p = np.append(p, gw)
-#print('p =', p)'''
-
-'''histn_p = hist_n(p)
-core = core + Entropy(histn_p)
-img[i, j] = core'''
 
        
 Kermit_Entropy_filtered = entropy_filter(Kermit, 1)
