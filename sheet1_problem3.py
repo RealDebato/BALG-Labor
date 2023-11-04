@@ -3,6 +3,7 @@ import math
 import scipy as sp
 import cv2
 import matplotlib.pyplot as plt
+import time
 
 
 Kermit = cv2.imread('_Smiley.png', 0)
@@ -55,21 +56,55 @@ def px_kernel_circle(img, x, y, r=3):                   # Gibt die px-werte im k
        px_kernel = img[np.sqrt((X - x)**2 + (Y - y)**2) <= r]
        return px_kernel
 
-def entropy_filter_slow(img, r=3):
+def entropy_filter_slow(img, r=3):                      # Berechnet jeden Kernel einzeln
        img = np.pad(array=Kermit, pad_width=r, mode='edge')
        filtered_img = img
-       for y in range(img.shape[0]):
-          for x in range(img.shape[1]):
+       for y in range(r, img.shape[0] - r):
+          for x in range(r, img.shape[1] - r):
                filtered_img[y, x] = Entropy(hist_n(px_kernel_circle(img, x, y, r))) * 32   # * 32 als Angleichung an uint8 
        filtered_img = pad_delete(filtered_img, r)
        return filtered_img
                
-def entropy_filter_faster(img, r=3):
-       
-          
+def entropy_filter_faster(img, r=3):                    # Berechnet jeden Kernel unter Betrachtung des vorherigen überlappenden Kernels
+       img = np.array(img)
+       img = np.pad(array=Kermit, pad_width=r, mode='edge')
+       filtered_img = img * 0
+       R_width = np.linspace(0, img.shape[1]-1, img.shape[1])
+       R_hight = np.linspace(0, img.shape[0]-1, img.shape[0])
+       X, Y = np.meshgrid(R_width, R_hight)
+       for y in range(r, img.shape[0] - r):
+              m_is_first_col = True
+              for x in range(r, img.shape[1] - r):
+                     if m_is_first_col:
+                            m_is_first_col = False
+                            pos_pre_kernel = np.sqrt((X - x)**2 + (Y - y)**2) <= r
+                            px_pre_kernel = img[pos_pre_kernel]
+                            entropy_pre_kernel = Entropy(hist_n(px_pre_kernel))
+                            filtered_img[y, x] = entropy_pre_kernel
+                            hist, _ = np.histogram(px_pre_kernel, 256, [0,256], False)
+                     else:
+                            pos_current_kernel = np.sqrt((X - x)**2 + (Y - y)**2) <= r
+                            pos_col_1_sub = np.logical_and(pos_pre_kernel == 1, pos_current_kernel == 0)
+                            pos_col_4_add = np.logical_and(pos_pre_kernel == 0, pos_current_kernel == 1)
+                            pos_pre_kernel = pos_current_kernel
+                            px_col_1_sub = img[pos_col_1_sub]
+                            px_col_4_add = img[pos_col_4_add]
+                            for i in px_col_1_sub:
+                                  hist[i] = hist[i] - 1
+                            for i in px_col_4_add:
+                                  hist[i] = hist[i] + 1
+                            # Hist muss noch normalisiert werden bevor damit die Entropie berechnet werden kann
+                            hist_normal = hist[hist > 0]/np.sum(hist)
+                            filtered_img[y, x] = Entropy(hist_normal) * 32
+       return filtered_img
 
-Kermit_Entropy_filtered = entropy_filter_slow(Kermit, 1)
-print('Filtered Kermit, slow=\n', Kermit_Entropy_filtered)
+def entropy_filter_faster_LUT(img, r=3):
+       
+
+
+
+Kermit_Entropy_filtered = entropy_filter_faster(Kermit, 3)
+
 
 cv2.imshow('Entropie-Bild', Kermit_Entropy_filtered)
 print('Ende')

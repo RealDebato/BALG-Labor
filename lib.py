@@ -66,6 +66,7 @@ def getEntropyFurtherOptimized(img, r=3):
     X, Y = np.meshgrid(np.linspace(0, img.shape[1]-1, img.shape[1]), np.linspace(0, img.shape[0]-1, img.shape[0]))
     for y in range(img.shape[0]):
         reloadHist = True
+        
         for x in range(img.shape[1]):
             if reloadHist:
                 oldKernel = np.sqrt((X - x)**2 + (Y - y)**2) <= r
