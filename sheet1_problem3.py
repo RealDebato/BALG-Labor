@@ -69,7 +69,7 @@ def entropy_filter_faster(img, r=3):                    # Berechnet jeden Kernel
        img = np.array(img)
        img = np.pad(array=Kermit, pad_width=r, mode='edge')
        filtered_img = img * 0
-       R_width = np.linspace(0, img.shape[1]-1, img.shape[1])         # Meshfrid vom ganzen Bild
+       R_width = np.linspace(0, img.shape[1]-1, img.shape[1])         # Meshgrid vom ganzen Bild
        R_hight = np.linspace(0, img.shape[0]-1, img.shape[0])         #
        X, Y = np.meshgrid(R_width, R_hight)                           #
        for y in range(r, img.shape[0] - r):                           
@@ -122,7 +122,7 @@ def entropy_filter_faster_LUT(img, r=3):
                                   P = np.append(P, LUT[u])
                             entropy_pre_kernel = Entropy(P)
                             filtered_img[y, x] = entropy_pre_kernel * 32
-                            #hist, _ = np.histogram(px_pre_kernel, 256, [0,256], False)
+
                      else:
                             pos_current_kernel = np.sqrt((X - x)**2 + (Y - y)**2) <= r
                             pos_col_1_sub = np.logical_and(pos_pre_kernel == 1, pos_current_kernel == 0)
@@ -142,7 +142,6 @@ def entropy_filter_faster_LUT(img, r=3):
 
                             entropy_pre_kernel = entropy_pre_kernel - Entropy_col1 + Entropy_col4
                             
-                            #hist_normal = hist[hist > 0]/np.sum(hist)
                             filtered_img[y, x] = entropy_pre_kernel * 32
                             
                   
@@ -151,7 +150,7 @@ def entropy_filter_faster_LUT(img, r=3):
 
 t0 = time.time()
 
-Kermit_Entropy_filtered = entropy_filter_faster(Kermit, 1)
+Kermit_Entropy_filtered = entropy_filter_faster_LUT(Kermit, 1)
 
 t1 = time.time()
 
