@@ -23,7 +23,7 @@ kernel = np.ones((r, r), np.uint8)
 lin_laplace = cv2.Laplacian(img, ddepth=0, ksize=r)
 S_lin = img - (0.3 * lin_laplace).astype(np.uint8)
 
-# Morphological Laplacian --->  0.5 * (Dilatation + Erosion) - img
+# Morphological Laplacian --->  0.5 * (Dilatation + Erosion)
 morph_laplace = 0.5 * (cv2.dilate(img, kernel, iterations=1) + cv2.erode(img, kernel, iterations=1))
 S_morph = img - (0.3 * morph_laplace).astype(np.uint8)
 
@@ -47,7 +47,7 @@ cv2.imshow('Gaussian', smooth_gaussian)
 lin_laplace_S = cv2.Laplacian(smooth_gaussian, ddepth=0, ksize=r)
 S_lin_smooth = smooth_gaussian - (0.3 * lin_laplace_S).astype(np.uint8)
 
-# Morphological Laplacian --->  0.5 * (Dilatation + Erosion) - img
+# Morphological Laplacian --->  0.5 * (Dilatation + Erosion)
 morph_laplace_S = 0.5 * (cv2.dilate(smooth_gaussian, kernel, iterations=1) + cv2.erode(smooth_gaussian, kernel, iterations=1))
 S_morph_smooth = img - (0.3 * morph_laplace_S).astype(np.uint8)
 
@@ -74,4 +74,4 @@ cv2.destroyAllWindows()
 # lowContrast.jpg ist der Tophatfilter am geeignetsten
 # city.jpg ist der Lineare Laplace am geeignetsten
 # retina1.jpg ist der morphologische Laplace am geeignetsten
-# c ist Bildabhängig
+# c ist bildabhängig
