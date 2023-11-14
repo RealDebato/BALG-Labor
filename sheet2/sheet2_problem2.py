@@ -3,83 +3,78 @@ import math
 import scipy
 import cv2
 import matplotlib.pyplot as plt
+import skimage as ski
 
-# Reconstruction by erosion
+
+#---------------------------------------------------------------------------------------------------
+# Images
 
 img = cv2.imread('sheet2\Test_Images\particle1.jpg', 0)
 img = np.abs(255 - img)
-plt.imshow(img)
+_, img = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
+#plt.imshow(img)
+cv2.imshow('Img', img)
 
-cv2.imshow('Orginal', img)
+img2 = cv2.imread('sheet2/Test_Images/electrop.jpg', 0)
+img2 = np.abs(255 - img2)
+#_, img2 = cv2.threshold(img2, 127, 255, cv2.THRESH_BINARY)
+#plt.imshow(img2)
+cv2.imshow('Img2', img2)
 
 r = 1
 kernel = np.ones((3, 3), np.uint8)
 
-def gray_erosion(img, r):
-    img = np.array(img)
-    img = np.pad(array=img, pad_width=r, mode='edge')
-    filtered_img = img * 0.0
-    R_width = np.linspace(0, img.shape[1]-1, img.shape[1])         
-    R_hight = np.linspace(0, img.shape[0]-1, img.shape[0])         
-    X, Y = np.meshgrid(R_width, R_hight)    
-    for y in range(r, img.shape[0] - r):
-        for x in range(r, img.shape[1] - r):
-            pos_kernel = []
-            pos_kernel = np.logical_and(np.abs((X - x)) <=r,  np.abs((Y - y)) <= r) # Hier stimmt was nicht
-            print(pos_kernel)
-            px_kernel = img[pos_kernel]
-            print(px_kernel)
-            filtered_img[y, x] = np.min(px_kernel)
-            print(filtered_img[y, x])
-    return filtered_img
-
-def ero_recon(img, kernel, eps):
-    
-    i = 0
-    
-    erosion_img = cv2.erode(img, kernel, iterations=1)
-    while True:
-        if np.abs(np.subtract(img, erosion_img)).all() > eps:
-            erosion_img = cv2.erode(img, kernel, iterations=1)
-            i = i + 1
-        elif i > 100:
-            print('Laufzeit zu lang')
-            break
-        else:
-            return erosion_img
-
 #---------------------------------------------------------------------------------------------------
+# Geodesic Reconstruction for binary images
 # Startpunkte mit Erosion bestimmen
 
-start = cv2.erode(img, kernel, iterations=15)
+def recon_by_dilation_binary(img, kernel,  start_iter):
 
-cv2.imshow('Start', start)
+    start = cv2.erode(img, kernel, iterations=start_iter)
+    cv2.imshow('Start1', start)
 
+    # Reconstruction by dilation
+    Recon = 255 * (np.logical_and(img, cv2.dilate(start, kernel, iterations=1)).astype(np.uint8))
+    Recon_old = 255* (np.logical_and(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8))
+    i = 0
 
-# Reconstruction by dilation
-Recon = 255 * (np.logical_and(img, cv2.dilate(start, kernel, iterations=1)).astype(np.uint8))
-Recon_old = np.logical_and(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8)
-i = 0
+    while Recon.all() == Recon_old.all():
+        Recon = 255 * (np.logical_and(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8))
+        Recon_old = 255 * (np.logical_and(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8))
+        i = i + 1
+        if i == 100:
+            break
 
-while Recon.all() == Recon_old.all():
-    Recon = 255 * (np.logical_and(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8))
-    Recon_old = np.logical_and(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8)
-    i = i + 1
-    if i == 100:
-        break
-    
+    return Recon
 
-cv2.imshow('Recon', Recon)
+cv2.imshow('Binary Reconstruction', recon_by_dilation_binary(img, kernel, 15))
 
-plt.imshow(img)
+#---------------------------------------------------------------------------------------------------
+# Geodesic Reconstruction for grey value images
 
+def recon_by_dilation_grey(img, kernel, start_iter):
+    start = cv2.erode(img, kernel, iterations=start_iter)
+    cv2.imshow('Start2', start)
 
+    # Reconstruction by dilation
+    Recon = np.minimum(img, cv2.dilate(start, kernel, iterations=1)).astype(np.uint8)
+    Recon_old = np.minimum(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8)
+    i = 0
 
-#cv2.imshow('Diff', img - Recon)
+    while Recon.all() == Recon_old.all():
+        Recon = np.minimum(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8)
+        Recon_old = np.minimum(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8)
+        i = i + 1
+        if i == 100:
+            break
 
+    return Recon
 
+cv2.imshow('Grey Reconstruction', recon_by_dilation_grey(img2, kernel, 7))
 
-#cv2.imshow('Erosion', Erosion)
+#---------------------------------------------------------------------------------------------------
+# Geodesic Reconstruction for grey value images
+
 
 
 print('Ende')
