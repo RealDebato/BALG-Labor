@@ -4,17 +4,13 @@ import scipy
 import cv2
 import matplotlib.pyplot as plt
 
-img = cv2.imread('sheet2\Test_Images\lowContrast.jpg')
+img = cv2.imread('sheet2\Test_Images\city.jpg')
 
 cv2.imshow('Orginal', img)
 
 
 r = 3
 
-
-
-#lin_laplace = img*0
-#morph_laplace = img*0
 kernel = np.ones((r, r), np.uint8)
 
 # Ohne Smoothing
@@ -23,9 +19,9 @@ kernel = np.ones((r, r), np.uint8)
 lin_laplace = cv2.Laplacian(img, ddepth=0, ksize=r)
 S_lin = img - (0.2 * lin_laplace).astype(np.uint8)
 
-# Morphological Laplacian --->  0.5 * (Dilatation + Erosion)
+# Morphological Laplacian --->  (Dilatation + Erosion) - 2I
 morph_laplace = 0.5 * (cv2.dilate(img, kernel, iterations=1) + cv2.erode(img, kernel, iterations=1))
-S_morph = img - (0.1 * morph_laplace).astype(np.uint8)
+S_morph = img - (0.2 * morph_laplace).astype(np.uint8)
 
 # Tophat
 WTH = cv2.morphologyEx(img, cv2.MORPH_TOPHAT, kernel)
@@ -49,7 +45,7 @@ S_lin_smooth = smooth_gaussian - (0.2 * lin_laplace_S).astype(np.uint8)
 
 # Morphological Laplacian --->  0.5 * (Dilatation + Erosion)
 morph_laplace_S = 0.5 * (cv2.dilate(smooth_gaussian, kernel, iterations=1) + cv2.erode(smooth_gaussian, kernel, iterations=1))
-S_morph_smooth = img - (0.1 * morph_laplace_S).astype(np.uint8)
+S_morph_smooth = img - (0.2 * morph_laplace_S).astype(np.uint8)
 
 # Tophat
 WTH_S = cv2.morphologyEx(smooth_gaussian, cv2.MORPH_TOPHAT, kernel)
