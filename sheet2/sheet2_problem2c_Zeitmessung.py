@@ -5,7 +5,25 @@ import cv2
 import matplotlib.pyplot as plt
 import skimage as ski
 import time
-from sheet2_problem2 import recon_by_dilation_grey
+
+#---------------------------------------------------------------------------------------------------
+# functions
+def recon_by_dilation_grey(img, kernel, start_iter):
+    start = cv2.erode(img, kernel, iterations=start_iter)
+    #cv2.imshow('Start2', start)
+
+    # Reconstruction by dilation
+    t0_selfmade = time.time()
+    Recon = np.minimum(img, cv2.dilate(start, kernel, iterations=1)).astype(np.uint8)
+    Recon_old = np.minimum(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8)
+    i = 0
+
+    while np.array_equal(Recon, Recon_old) == False:
+        Recon = np.minimum(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8)
+        Recon_old = np.minimum(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8)
+
+    t1_selfmade = time.time()
+    return Recon, t1_selfmade - t0_selfmade
 
 #---------------------------------------------------------------------------------------------------
 # Images
@@ -16,10 +34,12 @@ img150 = cv2.imread('sheet2\image sizes\electrop150.jpg')
 img200 = cv2.imread('sheet2\image sizes\electrop200.jpg')
 img500 = cv2.imread('sheet2\image sizes\electrop500.jpg')
 
-kernel = np.ones(3, 3).astype(np.uint8)
+kernel = np.ones(3).astype(np.uint8)
 
 #---------------------------------------------------------------------------------------------------
-# times
+# global
+
+n = 1
 
 time100a = []
 time120a = []
@@ -36,13 +56,13 @@ time500b = []
 #---------------------------------------------------------------------------------------------------
 # Messung 100
 # selfmade
-for i in range(0, 50):
+for i in range(0, n):
     img_grey_recon_selfmade, time_grey_selfmade = recon_by_dilation_grey(img100, kernel, 7)
     time100a = np.append(time100a, time_grey_selfmade)
 
 # scikit
-for i in range(0, 50):
-    seed_g = ski.morphology.erosion(img100, ski.morphology.square(15)).astype(np.double)
+for i in range(0, n):
+    seed_g = cv2.erode(img100, kernel, iterations=7).astype(np.double)
     footprint = img100.astype(np.double)
 
     t0_scikit_grey = time.time()
@@ -54,13 +74,13 @@ for i in range(0, 50):
 #---------------------------------------------------------------------------------------------------
 # Messung 120
 # selfmade
-for i in range(0, 50):
+for i in range(0, n):
     img_grey_recon_selfmade, time_grey_selfmade = recon_by_dilation_grey(img120, kernel, 7)
     time120a = np.append(time120a, time_grey_selfmade)
 
 # scikit
-for i in range(0, 50):
-    seed_g = ski.morphology.erosion(img120, ski.morphology.square(15)).astype(np.double)
+for i in range(0, n):
+    seed_g = cv2.erode(img120, kernel, iterations=7).astype(np.double)
     footprint = img120.astype(np.double)
 
     t0_scikit_grey = time.time()
@@ -72,13 +92,13 @@ for i in range(0, 50):
 #---------------------------------------------------------------------------------------------------
 # Messung 150
 # selfmade
-for i in range(0, 50):
+for i in range(0, n):
     img_grey_recon_selfmade, time_grey_selfmade = recon_by_dilation_grey(img150, kernel, 7)
     time150a = np.append(time150a, time_grey_selfmade)
 
 # scikit
-for i in range(0, 50):
-    seed_g = ski.morphology.erosion(img150, ski.morphology.square(15)).astype(np.double)
+for i in range(0, n):
+    seed_g = cv2.erode(img150, kernel, iterations=7).astype(np.double)
     footprint = img150.astype(np.double)
 
     t0_scikit_grey = time.time()
@@ -90,13 +110,13 @@ for i in range(0, 50):
 #---------------------------------------------------------------------------------------------------
 # Messung 200
 # selfmade
-for i in range(0, 50):
+for i in range(0, n):
     img_grey_recon_selfmade, time_grey_selfmade = recon_by_dilation_grey(img200, kernel, 7)
     time200a = np.append(time200a, time_grey_selfmade)
 
 # scikit
-for i in range(0, 50):
-    seed_g = ski.morphology.erosion(img200, ski.morphology.square(15)).astype(np.double)
+for i in range(0, n):
+    seed_g = cv2.erode(img200, kernel, iterations=7).astype(np.double)
     footprint = img200.astype(np.double)
 
     t0_scikit_grey = time.time()
@@ -109,13 +129,13 @@ for i in range(0, 50):
 #---------------------------------------------------------------------------------------------------
 # Messung 500
 # selfmade
-for i in range(0, 50):
+for i in range(0, n):
     img_grey_recon_selfmade, time_grey_selfmade = recon_by_dilation_grey(img500, kernel, 7)
     time500a = np.append(time500a, time_grey_selfmade)
 
 # scikit
-for i in range(0, 50):
-    seed_g = ski.morphology.erosion(img500, ski.morphology.square(15)).astype(np.double)
+for i in range(0, n):
+    seed_g = cv2.erode(img500, kernel, iterations=7).astype(np.double)
     footprint = img500.astype(np.double)
 
     t0_scikit_grey = time.time()
@@ -132,7 +152,7 @@ meanTime150a = np.mean(time150a)
 meanTime200a = np.mean(time200a)
 meanTime500a = np.mean(time500a)
 
-Time_selfmade = [meanTime100a, meanTime120a, meanTime150a, meanTime200a, meanTime500a]
+Time_selfmade = [meanTime100a, meanTime120a, meanTime150a, meanTime200a]
 
 # scikit
 meanTime100b = np.mean(time100b)
@@ -141,11 +161,11 @@ meanTime150b = np.mean(time150b)
 meanTime200b = np.mean(time200b)
 meanTime500b = np.mean(time500b)
 
-Time_scikit = [meanTime100b, meanTime120b, meanTime150b, meanTime200b, meanTime500b]
+Time_scikit = [meanTime100b, meanTime120b, meanTime150b, meanTime200b]
 
 
-x_Axis = np.arange(0, 5)
+x_Axis = [1, 1.2, 1.5, 2]
 
-plt.plot(Time_selfmade, x_Axis, 'r', Time_scikit, x_Axis, 'b')
+plt.plot(x_Axis, Time_selfmade, 'r', x_Axis, Time_scikit, 'b')
 plt.show()
 

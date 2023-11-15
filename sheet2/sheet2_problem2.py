@@ -32,12 +32,10 @@ def recon_by_dilation_binary(img, kernel,  start_iter):
     Recon_old = 255* (np.logical_and(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8))
     i = 0
 
-    while Recon.all() == Recon_old.all():
+    while np.array_equal(Recon, Recon_old) == False:
         Recon = 255 * (np.logical_and(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8))
         Recon_old = 255 * (np.logical_and(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8))
-        i = i + 1
-        if i == 100:
-            break
+
     
     t1_selfmade = time.time()
     return Recon, t1_selfmade - t0_selfmade
@@ -52,7 +50,7 @@ def recon_by_dilation_grey(img, kernel, start_iter):
     Recon_old = np.minimum(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8)
     i = 0
 
-    while Recon.all() == Recon_old.all():
+    while np.array_equal(Recon, Recon_old) == False:
         Recon = np.minimum(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8)
         Recon_old = np.minimum(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8)
         i = i + 1
@@ -92,6 +90,7 @@ v_time_selfmade_grey = np.append(v_time_selfmade_grey, time_grey_selfmade)
 #---------------------------------------------------------------------------------------------------
 # Geodesic Reconstruction for binary images - scikit
 seed_b = ski.morphology.erosion(img, ski.morphology.square(30)).astype(np.double)
+
 footprint = img.astype(np.double)
 
 t0_scikit_binary = time.time()
