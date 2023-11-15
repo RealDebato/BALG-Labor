@@ -4,6 +4,7 @@ import scipy
 import cv2
 import matplotlib.pyplot as plt
 import skimage as ski
+import time
 
 
 #---------------------------------------------------------------------------------------------------
@@ -27,7 +28,7 @@ kernel = np.ones((3, 3), np.uint8)
 #---------------------------------------------------------------------------------------------------
 # Geodesic Reconstruction for binary images
 # Startpunkte mit Erosion bestimmen
-
+'''
 def recon_by_dilation_binary(img, kernel,  start_iter):
 
     start = cv2.erode(img, kernel, iterations=start_iter)
@@ -47,8 +48,10 @@ def recon_by_dilation_binary(img, kernel,  start_iter):
 
     return Recon
 
-cv2.imshow('Binary Reconstruction', recon_by_dilation_binary(img, kernel, 15))
-
+t1 = time.time()
+cv2.imshow('Binary Reconstruction', recon_by_dilation_binary(img, kernel, 7))
+t2 = time.time()
+print('Time recon binary', t2 - t1)
 #---------------------------------------------------------------------------------------------------
 # Geodesic Reconstruction for grey value images
 
@@ -70,13 +73,28 @@ def recon_by_dilation_grey(img, kernel, start_iter):
 
     return Recon
 
+t3 = time.time()
 cv2.imshow('Grey Reconstruction', recon_by_dilation_grey(img2, kernel, 7))
+t4 = time.time()
+print('Time recon grey', t4 - t3)
+
+'''
+
+
+
 
 #---------------------------------------------------------------------------------------------------
-# Geodesic Reconstruction for grey value images
+# Geodesic Reconstruction scikit-images
+#---------------------------------------------------------------------------------------------------
 
+#---------------------------------------------------------------------------------------------------
+# Geodesic Reconstruction for grey value images - scikit
+
+sci_erode = ski.morphology.erosion(img2, ski.morphology.square(15))
+cv2.imshow('sci erode', sci_erode)
+
+cv2.imshow('Scikit recon', ski.morphology.reconstruction(sci_erode, img2, 'dilation'))
 
 
 print('Ende')
 cv2.waitKey(0)
-cv2.destroyAllWindows() 
