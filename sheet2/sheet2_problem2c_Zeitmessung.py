@@ -39,7 +39,7 @@ kernel = np.ones(3).astype(np.uint8)
 #---------------------------------------------------------------------------------------------------
 # global
 
-n = 1
+n = 5
 
 time100a = []
 time120a = []
@@ -152,7 +152,7 @@ meanTime150a = np.mean(time150a)
 meanTime200a = np.mean(time200a)
 meanTime500a = np.mean(time500a)
 
-Time_selfmade = [meanTime100a, meanTime120a, meanTime150a, meanTime200a]
+Time_selfmade = [meanTime100a, meanTime120a, meanTime150a, meanTime200a, meanTime500a]
 
 # scikit
 meanTime100b = np.mean(time100b)
@@ -161,11 +161,13 @@ meanTime150b = np.mean(time150b)
 meanTime200b = np.mean(time200b)
 meanTime500b = np.mean(time500b)
 
-Time_scikit = [meanTime100b, meanTime120b, meanTime150b, meanTime200b]
+Time_scikit = [meanTime100b, meanTime120b, meanTime150b, meanTime200b, meanTime500b]
 
 
-x_Axis = [1, 1.2, 1.5, 2]
+x_Axis = [1, 1.2, 1.5, 2, 5]
 
-plt.plot(x_Axis, Time_selfmade, 'r', x_Axis, Time_scikit, 'b')
+plt.plot(x_Axis, Time_selfmade, 'r', label="selfmade")
+plt.plot(x_Axis, Time_scikit, 'b', label="scikit")
+plt.legend()
 plt.show()
 
