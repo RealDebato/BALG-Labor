@@ -71,21 +71,39 @@ cv2.imshow('Inv Orginal', inv_img)
 #---------------------------------------------------------------------------------------------------
 # main
 
-recon_by_opening, time_recon_opening = recon_opening(inv_img, kernel, 7)
-cv2.imshow('Recon opening', recon_by_opening)
+t0 = time.time()
 
 recon_by_closing, time_recon_closing = recon_closing(img, kernel, 7)
 cv2.imshow('Recon closing', recon_by_closing)
 
-#cv2.imshow('delta I/O', img - recon_by_opening)
-
-
 smoothing_by_reconstrucion_cl_op, _ = recon_opening(recon_by_closing, kernel, 7)
 cv2.imshow('smooth cl-op', smoothing_by_reconstrucion_cl_op)
+
+t1 = time.time()
+
+print('Time smothing by recon (closing->opening)', t1 - t0)
+time_smooth_cl_op = t1-t0
+
+
+t0 = time.time()
+
+recon_by_opening, time_recon_opening = recon_opening(inv_img, kernel, 7)
+cv2.imshow('Recon opening', recon_by_opening)
 
 smoothing_by_reconstrucion_op_cl, _ = recon_closing(recon_by_opening, kernel, 7)
 cv2.imshow('smooth op-cl', smoothing_by_reconstrucion_op_cl)
 
+t1 = time.time()
+
+print('Time smothing by recon (opening->closing)', t1 - t0)
+time_smooth_op_cl = t1-t0
+
+#---------------------------------------------------------------------------------------------------
+# Output
+x_axis = ['Recon closing', 'Recon opening', 'smoothing_cl_op', 'smoothing_op_cl']
+y_axis = [time_recon_closing, time_recon_opening, time_smooth_cl_op, time_smooth_op_cl]
+plt.stem(x_axis, y_axis, 'r')
+plt.show()
 
 #---------------------------------------------------------------------------------------------------
 # main-end
