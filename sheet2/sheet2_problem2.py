@@ -41,23 +41,24 @@ def recon_by_dilation_binary(img, kernel,  start_iter):
     return Recon, t1_selfmade - t0_selfmade
 
 def recon_by_dilation_grey(img, kernel, start_iter):
+    img = img.astype(np.double)
     start = cv2.erode(img, kernel, iterations=start_iter)
     #cv2.imshow('Start2', start)
 
     # Reconstruction by dilation
     t0_selfmade = time.time()
-    Recon = np.minimum(img, cv2.dilate(start, kernel, iterations=1)).astype(np.uint8)
-    Recon_old = np.minimum(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8)
+    Recon = np.minimum(img, cv2.dilate(start, kernel, iterations=1)).astype(np.double)
+    Recon_old = np.minimum(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.double)
     i = 0
 
     while np.array_equal(Recon, Recon_old) == False:
-        Recon = np.minimum(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8)
-        Recon_old = np.minimum(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8)
+        Recon = np.minimum(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.double)
+        Recon_old = np.minimum(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.double)
         i = i + 1
         if i == 100:
             break
     t1_selfmade = time.time()
-    return Recon, t1_selfmade - t0_selfmade
+    return Recon.astype(np.uint8), t1_selfmade - t0_selfmade
 
 #---------------------------------------------------------------------------------------------------
 # Images

@@ -9,32 +9,41 @@ import time
 #---------------------------------------------------------------------------------------------------
 # functions
 def recon_by_dilation_grey(img, kernel, start_iter):
+    img = img.astype(np.double)
     start = cv2.erode(img, kernel, iterations=start_iter)
+    start = start.astype(np.double)
     #cv2.imshow('Start2', start)
 
     # Reconstruction by dilation
     t0_selfmade = time.time()
-    Recon = np.minimum(img, cv2.dilate(start, kernel, iterations=1)).astype(np.uint8)
-    Recon_old = np.minimum(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8)
+    Recon = np.minimum(img, cv2.dilate(start, kernel, iterations=1)).astype(np.double)
+    Recon_old = np.minimum(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.double)
     i = 0
 
     while np.array_equal(Recon, Recon_old) == False:
-        Recon = np.minimum(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8)
-        Recon_old = np.minimum(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.uint8)
-
+        Recon = np.minimum(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.double)
+        Recon_old = np.minimum(img, cv2.dilate(Recon, kernel, iterations=1)).astype(np.double)
+        i = i + 1
+        if i == 100:
+            break
     t1_selfmade = time.time()
-    return Recon, t1_selfmade - t0_selfmade
+    return Recon.astype(np.uint8), t1_selfmade - t0_selfmade
 
 #---------------------------------------------------------------------------------------------------
 # Images
 
 img100 = cv2.imread('sheet2\image sizes\electrop100.jpg')
+img100 = np.abs(255 - img100)
 img120 = cv2.imread('sheet2\image sizes\electrop120.jpg')
+img120 = np.abs(255 - img120)
 img150 = cv2.imread('sheet2\image sizes\electrop150.jpg')
+img150 = np.abs(255 - img150)
 img200 = cv2.imread('sheet2\image sizes\electrop200.jpg')
+img200 = np.abs(255 - img200)
 img500 = cv2.imread('sheet2\image sizes\electrop500.jpg')
+img500 = np.abs(255 - img500)
 
-kernel = np.ones(3).astype(np.uint8)
+kernel = np.ones((3, 3), np.uint8)
 
 #---------------------------------------------------------------------------------------------------
 # global
@@ -57,8 +66,13 @@ time500b = []
 # Messung 100
 # selfmade
 for i in range(0, n):
-    img_grey_recon_selfmade, time_grey_selfmade = recon_by_dilation_grey(img100, kernel, 7)
+    t0_selfmade = time.time()
+    img_grey_recon_selfmade, _ = recon_by_dilation_grey(img100, kernel, 7)
+    t1_selfmade = time.time()
+    time_grey_selfmade = t1_selfmade - t0_selfmade
     time100a = np.append(time100a, time_grey_selfmade)
+    print('time100a', time_grey_selfmade)
+    cv2.imshow('Recon Img100', img_grey_recon_selfmade)
 
 # scikit
 for i in range(0, n):
@@ -70,6 +84,7 @@ for i in range(0, n):
     t1_scikit_grey = time.time()
 
     time100b = np.append(time100b, t1_scikit_grey - t0_scikit_grey)
+    print('Time100b', t1_scikit_grey - t0_scikit_grey)
 
 #---------------------------------------------------------------------------------------------------
 # Messung 120
@@ -166,6 +181,9 @@ Time_scikit = [meanTime100b, meanTime120b, meanTime150b, meanTime200b, meanTime5
 
 x_Axis = [1, 1.2, 1.5, 2, 5]
 
+
+print(Time_selfmade)
+print(Time_scikit)
 plt.plot(x_Axis, Time_selfmade, 'r', label="selfmade")
 plt.plot(x_Axis, Time_scikit, 'b', label="scikit")
 plt.legend()
