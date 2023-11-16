@@ -74,34 +74,49 @@ cv2.imshow('Inv Orginal', inv_img)
 t0 = time.time()
 
 recon_by_closing, time_recon_closing = recon_closing(img, kernel, 7)
-cv2.imshow('Recon closing', recon_by_closing)
-
 smoothing_by_reconstrucion_cl_op, _ = recon_opening(recon_by_closing, kernel, 7)
-cv2.imshow('smooth cl-op', smoothing_by_reconstrucion_cl_op)
-
 t1 = time.time()
-
-print('Time smothing by recon (closing->opening)', t1 - t0)
-time_smooth_cl_op = t1-t0
+time_smooth_cl_op = t1 - t0
 
 
 t0 = time.time()
-
 recon_by_opening, time_recon_opening = recon_opening(inv_img, kernel, 7)
-cv2.imshow('Recon opening', recon_by_opening)
-
 smoothing_by_reconstrucion_op_cl, _ = recon_closing(recon_by_opening, kernel, 7)
-cv2.imshow('smooth op-cl', smoothing_by_reconstrucion_op_cl)
-
 t1 = time.time()
+time_smooth_op_cl = t1 - t0
 
-print('Time smothing by recon (opening->closing)', t1 - t0)
-time_smooth_op_cl = t1-t0
+
+t0 = time.time()
+opening = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel, iterations=3)
+op_cl = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel, iterations=3)
+t1 = time.time()
+time_op_cl = t1 - t0
+print(time_op_cl)
+print(t0)
+print(t1)
+
+
+t0 = time.time()
+closing = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel, iterations=3)
+cl_op = cv2.morphologyEx(closing, cv2.MORPH_OPEN, kernel, iterations=3)
+t1 = time.time()
+time_cl_op = t1 - t0
+print(time_cl_op)
+print(t0)
+print(t1)
 
 #---------------------------------------------------------------------------------------------------
 # Output
-x_axis = ['Recon closing', 'Recon opening', 'smoothing_cl_op', 'smoothing_op_cl']
-y_axis = [time_recon_closing, time_recon_opening, time_smooth_cl_op, time_smooth_op_cl]
+cv2.imshow('Recon opening', recon_by_opening)
+cv2.imshow('Recon closing', recon_by_closing)
+cv2.imshow('smooth op-cl', smoothing_by_reconstrucion_op_cl)
+cv2.imshow('smooth cl-op', smoothing_by_reconstrucion_cl_op)
+cv2.imshow('Morph-smooth op->cl', op_cl)
+cv2.imshow('Morph-smooth cl->op', cl_op)
+
+
+x_axis = ['Recon closing', 'Recon opening', 'Recon-smoothing cl->op', 'Recon-smoothing op->cl', 'Morph-smooth cl->op', 'Morph-smooth op->cl']
+y_axis = [time_recon_closing, time_recon_opening, time_smooth_cl_op, time_smooth_op_cl, time_cl_op, time_op_cl]
 plt.stem(x_axis, y_axis, 'r')
 plt.show()
 
