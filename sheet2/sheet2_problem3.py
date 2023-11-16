@@ -36,16 +36,21 @@ _, img = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
 # main
 
 dmap = cv2.distanceTransform(img, cv2.DIST_L2, 3)
-_, foreground_save = cv2.threshold(dmap, 0.45 * dmap.max(), 255, 0)                 # Funktioniert nicht, weil die Distanzwerte zu verschieden sind
-background_save = cv2.dilate(img, np.ones((5, 5), np.uint8), iterations=1)
+#_, foreground_save = cv2.threshold(dmap, 0.45 * dmap.max(), 255, 0)                 # Funktioniert nicht, weil die Distanzwerte zu verschieden sind
+#background_save = cv2.dilate(img, np.ones((5, 5), np.uint8), iterations=1)
 #unbekannt = cv2.subtract(background_save, foreground_save)
-cv2.imshow('fg', foreground_save)
+#dmap_blur = cv2.medianBlur(dmap.astype(np.uint8), 27)
+local_max = ski.feature.peak_local_max(dmap, min_distance=80)
+local_max[:, [0, 1]] = local_max[:, [1, 0]]
+print(local_max)
+img_local_max = dmap
+for coord in local_max:
+    cv2.circle(img_local_max, coord, 10, 255, -1)
 
 #---------------------------------------------------------------------------------------------------
 # output
-plt.style.use('_mpl-gallery')
 
-plot_image_to_3D(foreground_save)
+plot_image_to_3D(img_local_max)
 
 cv2.imshow('Orginal', img)
 cv2.imshow('Distance Map', dmap.astype(np.uint8))
