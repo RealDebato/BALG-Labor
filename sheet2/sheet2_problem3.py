@@ -19,7 +19,7 @@ def plot_image_to_3D(plot_3d):
     X, Y = np.meshgrid(x , y)
 
     _, ax = plt.subplots(subplot_kw={"projection": "3d"})
-    ax.plot_surface(X, Y, plot_3d, cmap=plt.cm.gray, linewidth=0)
+    ax.plot_surface(X, Y, plot_3d, cmap=plt.cm.Blues, linewidth=0)
 
 #---------------------------------------------------------------------------------------------------
 # globals
@@ -36,31 +36,48 @@ _, img = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
 # main
 
 dmap = cv2.distanceTransform(img, cv2.DIST_L2, 3)
-#_, foreground_save = cv2.threshold(dmap, 0.45 * dmap.max(), 255, 0)                 # Funktioniert nicht, weil die Distanzwerte zu verschieden sind
-#background_save = cv2.dilate(img, np.ones((5, 5), np.uint8), iterations=1)
-#unbekannt = cv2.subtract(background_save, foreground_save)
-#dmap_blur = cv2.medianBlur(dmap.astype(np.uint8), 27)
 local_max = ski.feature.peak_local_max(dmap, min_distance=80)
-local_max[:, [0, 1]] = local_max[:, [1, 0]]
-print(local_max)
-img_local_max = dmap
-for coord in local_max:
-    cv2.circle(img_local_max, coord, 10, 255, -1)
+
+background = cv2.dilate(img, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9)))
+seed = np.zeros_like(img)
+seed[tuple(local_max.T)] = 255
+#seed = cv2.dilate(seed, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (47, 47)))
+flood_area = cv2.subtract(background, seed)
+flood_area = np.abs(255-flood_area)
+
+flood_area = cv2.subtract(background, seed)
+
+_, labels = cv2.connectedComponents(seed)
+labels = labels + 1
+
+labels[flood_area==255] = 0
+
+
+labels = np.int32(labels)
+img = cv2.merge((img, np.zeros_like(img), np.zeros_like(img)))
+
+
+watershed = cv2.watershed(img, labels)
+plt.imshow(watershed.astype(np.uint8))
+plt.show
 
 #---------------------------------------------------------------------------------------------------
 # output
 
-plot_image_to_3D(img_local_max)
+plot_image_to_3D(watershed)
 
-cv2.imshow('Orginal', img)
-cv2.imshow('Distance Map', dmap.astype(np.uint8))
-#plt.imshow(dmap)
+cv2.imshow('Watershed', watershed.astype(np.uint8))
+
+plt.imshow(watershed)
+plt.title("Watershed")
+plt.show
+
 
 
 
 #---------------------------------------------------------------------------------------------------
 # main-end
 
-plt.show()
+plt.show
 print('La fin')
 cv2.waitKey(0)
