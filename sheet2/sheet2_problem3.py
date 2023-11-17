@@ -29,14 +29,14 @@ def plot_image_to_3D(plot_3d):
 #---------------------------------------------------------------------------------------------------
 # images
 
-img = cv2.imread('sheet2\Test_Images\overlapping_circles.png', 0)
+img = cv2.imread(R'sheet2\Test_Images\many_circles.png', 0)
 _, img = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
 
 #---------------------------------------------------------------------------------------------------
 # main
 
 dmap = cv2.distanceTransform(img, cv2.DIST_L2, 3)
-local_max = ski.feature.peak_local_max(dmap, min_distance=80)
+local_max = ski.feature.peak_local_max(dmap, min_distance=10)
 
 background = cv2.dilate(img, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9)))
 seed = np.zeros_like(img)
@@ -53,31 +53,36 @@ labels = labels + 1
 labels[flood_area==255] = 0
 
 
+
+
+
 labels = np.int32(labels)
 img = cv2.merge((img, np.zeros_like(img), np.zeros_like(img)))
 
 
 watershed = cv2.watershed(img, labels)
-plt.imshow(watershed.astype(np.uint8))
-plt.show
+seg_img = (watershed/watershed.max()) * 255
+seg_img = np.uint8(seg_img) 
 
 #---------------------------------------------------------------------------------------------------
 # output
 
-plot_image_to_3D(watershed)
+#plot_image_to_3D(watershed)
 
-cv2.imshow('Watershed', watershed.astype(np.uint8))
+cv2.imshow('Watershed', seg_img)
 
-plt.imshow(watershed)
-plt.title("Watershed")
-plt.show
+plot_image_to_3D(dmap)
 
+'''plt.figure()
+plt.imshow(seg_img)
+plt.show()'''
 
+#plot_image_to_3D(labels)
 
 
 #---------------------------------------------------------------------------------------------------
 # main-end
 
-plt.show
+plt.show()
 print('La fin')
 cv2.waitKey(0)
