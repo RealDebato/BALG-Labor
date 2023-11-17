@@ -34,50 +34,49 @@ _, img = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
 
 #---------------------------------------------------------------------------------------------------
 # main
+def watershed_full(img, switch):
+    dmap = cv2.distanceTransform(img, cv2.DIST_L2, 3)
+    local_max = ski.feature.peak_local_max(dmap, min_distance=10)
 
-dmap = cv2.distanceTransform(img, cv2.DIST_L2, 3)
-local_max = ski.feature.peak_local_max(dmap, min_distance=10)
+    seed = np.zeros_like(img)
+    seed[tuple(local_max.T)] = 255
+    flood_area = cv2.subtract(img, seed)
 
-background = cv2.dilate(img, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9)))
-seed = np.zeros_like(img)
-seed[tuple(local_max.T)] = 255
-#seed = cv2.dilate(seed, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (47, 47)))
-flood_area = cv2.subtract(background, seed)
-flood_area = np.abs(255-flood_area)
+    _, labels = cv2.connectedComponents(seed)
+    labels = labels + 1
 
-flood_area = cv2.subtract(background, seed)
+    labels[flood_area==255] = 0
 
-_, labels = cv2.connectedComponents(seed)
-labels = labels + 1
+    labels = np.int32(labels)
+    img = cv2.merge((img, np.zeros_like(img), np.zeros_like(img)))
 
-labels[flood_area==255] = 0
-
-
-
-
-
-labels = np.int32(labels)
-img = cv2.merge((img, np.zeros_like(img), np.zeros_like(img)))
-
-
-watershed = cv2.watershed(img, labels)
-seg_img = (watershed/watershed.max()) * 255
-seg_img = np.uint8(seg_img) 
+    watershed = cv2.watershed(img, labels)
+    seg_img = (watershed/watershed.max()) * 255
+    seg_img = np.uint8(seg_img)
+    if switch==0:
+        return seg_img
+    elif switch==1:
+        return watershed.astype(np.int32)
+ 
 
 #---------------------------------------------------------------------------------------------------
 # output
 
-#plot_image_to_3D(watershed)
+segmented_img_uint8 = watershed_full(img, 0)
+segmented_img_int32 = watershed_full(img, 1)
 
-cv2.imshow('Watershed', seg_img)
+cv2.imshow('Watershed', segmented_img_uint8)
+cv2.imshow('Orginal', img)
 
-plot_image_to_3D(dmap)
+#plot_image_to_3D(segmented_img_int32)
 
-'''plt.figure()
-plt.imshow(seg_img)
-plt.show()'''
+plt.figure()
+plt.imshow(segmented_img_int32)
+plt.show()
 
 #plot_image_to_3D(labels)
+
+
 
 
 #---------------------------------------------------------------------------------------------------
