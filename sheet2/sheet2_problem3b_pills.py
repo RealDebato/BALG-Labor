@@ -55,12 +55,23 @@ img_reconstruction_b[holeless==1] = 255
 
 #---------------------------------------------------------------------------------------------------
 # main
-def watershed_full(img, switch):
-    dmap = cv2.distanceTransform(img, cv2.DIST_L2, 3)
-    local_max = ski.feature.peak_local_max(dmap, min_distance=10)
+def watershed_full(img, switch, blur):
+
+    if blur == True:
+        dmap = cv2.distanceTransform(img, cv2.DIST_L2, 5)
+        dmap = ski.filters.gaussian(dmap, 3)               #ski.morphology.disk(5)
+        local_max = ski.feature.peak_local_max(dmap, min_distance=5)
+    else:
+        dmap = cv2.distanceTransform(img, cv2.DIST_L2, 5)
+        local_max = ski.feature.peak_local_max(dmap, min_distance=3)
+
+    plot_image_to_3D(dmap)
+
+    local_max = ski.feature.peak_local_max(dmap, min_distance=3)
 
     seed = np.zeros_like(img)
     seed[tuple(local_max.T)] = 255
+
     flood_area = cv2.subtract(img, seed)
 
     _, labels = cv2.connectedComponents(seed)
@@ -69,7 +80,16 @@ def watershed_full(img, switch):
     labels[flood_area==255] = 0
 
     labels = np.int32(labels)
-    img = cv2.merge((img, np.zeros_like(img), np.zeros_like(img)))
+
+    plt.figure()
+    plt.imshow(labels)
+    if blur == True:
+        plt.title("Labels blur")
+    else:
+        plt.title("Labels")
+
+    img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+    #img = cv2.merge((img, np.zeros_like(img), np.zeros_like(img)))
 
     watershed = cv2.watershed(img, labels)
     seg_img = (watershed/watershed.max()) * 255
@@ -83,22 +103,36 @@ def watershed_full(img, switch):
 #---------------------------------------------------------------------------------------------------
 # output
 
-segmented_img_uint8 = watershed_full(img_reconstruction_b, 0)
-#segmented_img_int32 = watershed_full(img, 1)
+#segmented_img_uint8 = watershed_full(img_reconstruction_b, 0, True)
+segmented_img_int32_blur = watershed_full(img_reconstruction_b, 1, True)
+segmented_img_int32 = watershed_full(img_reconstruction_b, 1, False)
 
-#cv2.imshow('Watershed', segmented_img_uint8)
+mask_blur = segmented_img_int32_blur == -1
+img_color_blur = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+img_color_blur[mask_blur, 2] = 255
+
+mask = segmented_img_int32 == -1
+img_color = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+img_color[mask, 2] = 255
+
+
 cv2.imshow('Binary', img_b)
 cv2.imshow('Recon Binary', img_reconstruction_b.astype(np.uint8))
 cv2.imshow('Orginal', img)
-#cv2.imshow(segmented_img_uint8)
-
-#plot_image_to_3D(segmented_img_int32)
+cv2.imshow('Seg blur', img_color_blur)
+cv2.imshow('Seg', img_color)
 
 plt.figure()
-plt.imshow(segmented_img_uint8)
-plt.show()
+plt.imshow(segmented_img_int32_blur)
+plt.title("Segmentierung (dmap mit blur)")
 
-#plot_image_to_3D(labels)
+plt.figure()
+plt.imshow(segmented_img_int32)
+plt.title("Segmentierung (dmap ohne blur)")
+
+plt.figure()
+plt.imshow(np.logical_xor(mask, mask_blur))
+plt.title("Diff")
 
 
 
