@@ -29,34 +29,73 @@ def plot_image_to_3D(plot_3d):
 # images
 
 img = cv2.imread(R'sheet2\FurtherImages\pears.png', 0)
-#_, img_b = cv2.threshold(img, 150, 255, cv2.THRESH_BINARY)
-#img_b = 255 - img_b
 
 #---------------------------------------------------------------------------------------------------
 # main
 
 img_blured = ski.filters.gaussian(img, 5)
-gradient = cv2.morphologyEx(img_blured, cv2.MORPH_GRADIENT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
+gradient = cv2.morphologyEx(img_blured, cv2.MORPH_GRADIENT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3)))
 gradient = np.uint8(gradient*255)
+
+# foreground-------------------------------
+# Morphological smoothing closing + opening
+
+gradient_smoothed = cv2.morphologyEx(gradient, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (19, 19)))
+gradient_smoothed = cv2.morphologyEx(gradient, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (19, 19)))
+local_max = ski.feature.peak_local_max(gradient_smoothed, min_distance=19)
+fg_local_max = np.ones_like(gradient_smoothed)
+fg_local_max[tuple(local_max.T)] = 255
+fg_local_max[fg_local_max!=255] = 0
+
+plt.figure()
+plt.imshow(fg_local_max)
+plt.title('Foreground Local Max')
+
+fg_threshold = np.ones_like(gradient_smoothed)
+fg_threshold[gradient_smoothed>1] = 255
+fg_threshold[gradient_smoothed<=1] = 0 
+fg_threshold = cv2.dilate(fg_threshold, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
+
+plt.figure()
+plt.imshow(fg_threshold)
+plt.title('Foreground Threshold')
+
+# background-------------------------------
+# skeletonize
+bg_sk_local_max = ski.morphology.skeletonize(fg_local_max)
+
+plt.figure()
+plt.imshow(bg_sk_local_max)
+plt.title('Background Local Max')
+
+bg_sk_threshold = ski.morphology.skeletonize(fg_threshold)
+
+plt.figure()
+plt.imshow(bg_sk_threshold)
+plt.title('Background Threshold')
 
 watershed_on_gradient = ski.segmentation.watershed(gradient, watershed_line=True)
 
 #---------------------------------------------------------------------------------------------------
 # output
 
-plt.figure()
+'''plt.figure()
 plt.imshow(img)
-plt.title('Orginal')
+plt.title('Orginal')'''
 
 plt.figure()
 plt.imshow(gradient)
 plt.title('Gradient')
 
 plt.figure()
+plt.imshow(gradient_smoothed)
+plt.title('Smoothed gradient')
+
+'''plt.figure()
 plt.imshow(watershed_on_gradient)
 plt.title('Watershed on gradient map')
 
-plot_image_to_3D(gradient)
+plot_image_to_3D(gradient)'''
 
 #---------------------------------------------------------------------------------------------------
 # main-end
