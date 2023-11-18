@@ -29,8 +29,6 @@ def plot_image_to_3D(plot_3d):
 # images
 
 img = cv2.imread(R'sheet2\FurtherImages\pears.png', 0)
-#_, img_b = cv2.threshold(img, 150, 255, cv2.THRESH_BINARY)
-#img_b = 255 - img_b
 
 #---------------------------------------------------------------------------------------------------
 # main
