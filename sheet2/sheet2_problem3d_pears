@@ -42,54 +42,96 @@ gradient = np.uint8(gradient*255)
 
 gradient_smoothed = cv2.morphologyEx(gradient, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (19, 19)))
 gradient_smoothed = cv2.morphologyEx(gradient, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (19, 19)))
-local_max = ski.feature.peak_local_max(gradient_smoothed, min_distance=20)
+local_max = ski.feature.peak_local_max(gradient_smoothed, min_distance=30)
 fg_local_max = np.ones_like(gradient_smoothed)
 fg_local_max[tuple(local_max.T)] = 255
 fg_local_max[fg_local_max!=255] = 0
 
-plt.figure()
+'''plt.figure()
 plt.imshow(fg_local_max)
-plt.title('Foreground Local Max')
+plt.title('Foreground Local Max')'''
 
 fg_threshold = np.ones_like(gradient_smoothed)
 fg_threshold[gradient_smoothed>1] = 255
 fg_threshold[gradient_smoothed<=1] = 0 
 fg_threshold = cv2.dilate(fg_threshold, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15)))
 
-plt.figure()
+'''plt.figure()
 plt.imshow(fg_threshold)
-plt.title('Foreground Threshold')
+plt.title('Foreground Threshold')'''
 
 # background-------------------------------
 # skeletonize
 
 bg_sk = ski.morphology.skeletonize(fg_threshold)
 
-plt.figure()
+
+'''plt.figure()
 plt.imshow(bg_sk)
-plt.title('Background Threshold')
+plt.title('Background Threshold')'''
 
 marker_fg_local_max = ndimage.label(fg_local_max)[0]
 marker_fg_threshold = ndimage.label(ski.util.invert(fg_threshold))[0]
 
+'''plt.figure()
+plt.imshow(marker_fg_bg_local_max)
+plt.title('Marker FG-BG local max')
 
+plt.figure()
+plt.imshow(marker_fg_bg_threshold)
+plt.title('Marker FG-BG threshold')'''
 
 watershed_fg_local_max = ski.segmentation.watershed(gradient, marker_fg_local_max, watershed_line=True)
 watershed_fg_threshold = ski.segmentation.watershed(gradient, marker_fg_threshold, watershed_line=True)
 
+marker_fg_bg_local_max = marker_fg_local_max + 1
+flood_area_local_max = fg_local_max - bg_sk
+
+'''plt.figure()
+plt.imshow(flood_area_local_max)
+plt.title('Flood area local max')'''
+
+marker_fg_bg_local_max[flood_area_local_max == 0] = 0
 
 
+marker_fg_bg_threshold = marker_fg_threshold + 1
+flood_area_threshold = fg_threshold - bg_sk
+
+'''plt.figure()
+plt.imshow(flood_area_threshold)
+plt.title('Flood area threshold')'''
+
+marker_fg_bg_threshold[flood_area_threshold == 255] = 0
+
+'''plt.figure()
+plt.imshow(marker_fg_bg_local_max)
+plt.title('Marker FG-BG local max')
+
+plt.figure()
+plt.imshow(marker_fg_bg_threshold)
+plt.title('Marker FG-BG threshold')'''
+
+watershed_fg_bg_local_max = ski.segmentation.watershed(gradient, marker_fg_bg_local_max, watershed_line=True)
+watershed_fg_bg_threshold = ski.segmentation.watershed(gradient, marker_fg_bg_threshold, watershed_line=True)
 
 #---------------------------------------------------------------------------------------------------
 # output
 
 plt.figure()
 plt.imshow(watershed_fg_local_max)
-plt.title('Watershed local max')
+plt.title('Watershed FG local max')
 
 plt.figure()
 plt.imshow(watershed_fg_threshold)
-plt.title('Watershed threshold')
+plt.title('Watershed FG threshold')
+
+plt.figure()
+plt.imshow(watershed_fg_bg_local_max)
+plt.title('Watershed FG-BG local max')
+
+plt.figure()
+plt.imshow(watershed_fg_bg_threshold)
+plt.title('Watershed FG-BG threshold')
 
 '''plt.figure()
 plt.imshow(img)
