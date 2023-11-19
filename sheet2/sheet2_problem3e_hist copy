@@ -34,14 +34,14 @@ img = cv2.imread(R'sheet2\FurtherImages\hist.png', 0)
 # main
 # Morph smooth by reconstruction
 #closing by reconstruction
-seed_erode = cv2.erode(img, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (23, 23)), iterations=1)
+seed_erode = cv2.erode(img, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (21, 21)), iterations=1)
 img_blured = ski.morphology.reconstruction(seed_erode, img, method='dilation')
-seed_dilate = cv2.dilate(img_blured, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (23, 23)), iterations=1)
+seed_dilate = cv2.dilate(img_blured, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (21, 21)), iterations=1)
 img_blured = ski.morphology.reconstruction(seed_dilate, img_blured, method='erosion')
 #opening by reconstruction
-seed_dilate = cv2.dilate(img_blured, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (23, 23)), iterations=1)
+seed_dilate = cv2.dilate(img_blured, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (21, 21)), iterations=1)
 img_blured = ski.morphology.reconstruction(seed_dilate, img_blured, method='erosion')
-seed_erode = cv2.erode(img_blured, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (23, 23)), iterations=1)
+seed_erode = cv2.erode(img_blured, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (21, 21)), iterations=1)
 img_blured = ski.morphology.reconstruction(seed_erode, img_blured, method='dilation')
 
 # Morph smooth
@@ -49,13 +49,13 @@ img_blured = ski.morphology.reconstruction(seed_erode, img_blured, method='dilat
 '''img_blured = cv2.morphologyEx(img, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15)))
 img_blured = cv2.morphologyEx(img_blured, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15)))'''
 
-#img_blured = ski.filters.gaussian(img_blured, 3)
+#img_blured = ski.filters.gaussian(img, 3)
 
 plt.figure()
 plt.imshow(img_blured)
 plt.title('img blured')
 
-#img_blured = ski.filters.gaussian(img, 3)
+
 gradient = cv2.morphologyEx(img_blured, cv2.MORPH_GRADIENT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3)))
 gradient = np.uint8(gradient*255)
 
@@ -65,17 +65,28 @@ plt.title('Gradient')
 
 
 # foreground-------------------------------
-# Morphological smoothing closing + opening
+# Morphological smoothing closing and opening
 
-gradient_smoothed = cv2.morphologyEx(gradient, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9)))
-gradient_smoothed = cv2.morphologyEx(gradient, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9)))
-
-# Hintergrund entfernen
-seed_erode = cv2.erode(gradient_smoothed, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9)), iterations=1)
+#closing by reconstruction
+seed_erode = cv2.erode(gradient, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (21, 21)), iterations=1)
+gradient_smoothed = ski.morphology.reconstruction(seed_erode, gradient, method='dilation')
+seed_dilate = cv2.dilate(gradient_smoothed, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (21, 21)), iterations=1)
+gradient_smoothed = ski.morphology.reconstruction(seed_dilate, gradient_smoothed, method='erosion')
+#opening by reconstruction
+seed_dilate = cv2.dilate(gradient_smoothed, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (21, 21)), iterations=1)
+gradient_smoothed = ski.morphology.reconstruction(seed_dilate, gradient_smoothed, method='erosion')
+seed_erode = cv2.erode(gradient_smoothed, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (21, 21)), iterations=1)
 gradient_smoothed = ski.morphology.reconstruction(seed_erode, gradient_smoothed, method='dilation')
 
+'''gradient_smoothed = cv2.morphologyEx(gradient, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7)))
+gradient_smoothed = cv2.morphologyEx(gradient, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7)))'''
 
-local_max = ski.feature.peak_local_max(gradient_smoothed, min_distance=10)
+# Hintergrund entfernen
+'''seed_erode = cv2.erode(gradient_smoothed, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9)), iterations=1)
+gradient_smoothed = ski.morphology.reconstruction(seed_erode, gradient_smoothed, method='dilation')'''
+
+
+local_max = ski.feature.peak_local_max(gradient_smoothed, min_distance=100)
 fg_local_max = np.ones_like(gradient_smoothed)
 fg_local_max[tuple(local_max.T)] = 255
 fg_local_max[fg_local_max!=255] = 0
@@ -91,32 +102,34 @@ plt.title('Foreground Local Max')
 fg_threshold = np.ones_like(gradient_smoothed)
 fg_threshold[gradient_smoothed>240] = 255
 fg_threshold[gradient_smoothed<=240] = 0 
-#fg_threshold = cv2.dilate(fg_threshold, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15)))
+#fg_threshold = cv2.dilate(fg_threshold, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (30, 30)))
 
 plt.figure()
 plt.imshow(fg_threshold)
 plt.title('Foreground Threshold')
-plt.show()
+
 # background-------------------------------
 # skeletonize
 
 bg_sk = ski.morphology.skeletonize(fg_threshold)
 
 
-'''plt.figure()
+plt.figure()
 plt.imshow(bg_sk)
-plt.title('Background Threshold')'''
+plt.title('Background Threshold')
 
 marker_fg_local_max = ndimage.label(fg_local_max)[0]
 marker_fg_threshold = ndimage.label(ski.util.invert(fg_threshold))[0]
 
 '''plt.figure()
-plt.imshow(marker_fg_bg_local_max)
-plt.title('Marker FG-BG local max')
+plt.imshow(marker_fg_local_max)
+plt.title('Marker FG local max')
 
 plt.figure()
-plt.imshow(marker_fg_bg_threshold)
-plt.title('Marker FG-BG threshold')'''
+plt.imshow(marker_fg_threshold)
+plt.title('Marker FG threshold')'''
+plt.show()
+
 
 watershed_fg_local_max = ski.segmentation.watershed(gradient, marker_fg_local_max, watershed_line=True)
 watershed_fg_threshold = ski.segmentation.watershed(gradient, marker_fg_threshold, watershed_line=True)
@@ -124,9 +137,9 @@ watershed_fg_threshold = ski.segmentation.watershed(gradient, marker_fg_threshol
 marker_fg_bg_local_max = marker_fg_local_max + 1
 flood_area_local_max = fg_local_max - bg_sk
 
-'''plt.figure()
+plt.figure()
 plt.imshow(flood_area_local_max)
-plt.title('Flood area local max')'''
+plt.title('Flood area local max')
 
 marker_fg_bg_local_max[flood_area_local_max == 0] = 0
 
@@ -134,19 +147,19 @@ marker_fg_bg_local_max[flood_area_local_max == 0] = 0
 marker_fg_bg_threshold = marker_fg_threshold + 1
 flood_area_threshold = fg_threshold - bg_sk
 
-'''plt.figure()
+plt.figure()
 plt.imshow(flood_area_threshold)
-plt.title('Flood area threshold')'''
+plt.title('Flood area threshold')
 
 marker_fg_bg_threshold[flood_area_threshold == 255] = 0
 
-'''plt.figure()
+plt.figure()
 plt.imshow(marker_fg_bg_local_max)
 plt.title('Marker FG-BG local max')
 
 plt.figure()
 plt.imshow(marker_fg_bg_threshold)
-plt.title('Marker FG-BG threshold')'''
+plt.title('Marker FG-BG threshold')
 
 watershed_fg_bg_local_max = ski.segmentation.watershed(gradient, marker_fg_bg_local_max, watershed_line=True)
 watershed_fg_bg_threshold = ski.segmentation.watershed(gradient, marker_fg_bg_threshold, watershed_line=True)
@@ -170,23 +183,9 @@ plt.figure()
 plt.imshow(watershed_fg_bg_threshold)
 plt.title('Watershed FG-BG threshold')
 
-'''plt.figure()
-plt.imshow(img)
-plt.title('Orginal')'''
 
-'''plt.figure()
-plt.imshow(gradient)
-plt.title('Gradient')'''
 
-'''plt.figure()
-plt.imshow(gradient_smoothed)
-plt.title('Smoothed gradient')'''
-
-'''plt.figure()
-plt.imshow(watershed_on_gradient)
-plt.title('Watershed on gradient map')
-
-plot_image_to_3D(gradient)'''
+#plot_image_to_3D(gradient)
 
 #---------------------------------------------------------------------------------------------------
 # main-end

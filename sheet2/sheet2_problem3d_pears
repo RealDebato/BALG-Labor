@@ -32,60 +32,111 @@ img = cv2.imread(R'sheet2\FurtherImages\pears.png', 0)
 
 #---------------------------------------------------------------------------------------------------
 # main
+# morph smooth by reconstruction
+#closing by reconstruction
+seed_erode = cv2.erode(img, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (21, 21)), iterations=1)
+img_blured = ski.morphology.reconstruction(seed_erode, img, method='dilation')
+seed_dilate = cv2.dilate(img_blured, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (21, 21)), iterations=1)
+img_blured = ski.morphology.reconstruction(seed_dilate, img_blured, method='erosion')
+#opening by reconstruction
+seed_dilate = cv2.dilate(img_blured, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (21, 21)), iterations=1)
+img_blured = ski.morphology.reconstruction(seed_dilate, img_blured, method='erosion')
+seed_erode = cv2.erode(img_blured, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (21, 21)), iterations=1)
+img_blured = ski.morphology.reconstruction(seed_erode, img_blured, method='dilation')
 
-img_blured = ski.filters.gaussian(img, 5)
-gradient = cv2.morphologyEx(img_blured, cv2.MORPH_GRADIENT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3)))
-gradient = np.uint8(gradient*255)
+'''plt.figure()
+plt.imshow(img_blured)
+plt.title('Blured Img')'''
 
-# foreground-------------------------------
+# -----> Bild ist schön glatt
+
+
+# foreground ermitteln-------------------------------
 # Morphological smoothing closing + opening
 
-gradient_smoothed = cv2.morphologyEx(gradient, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (19, 19)))
-gradient_smoothed = cv2.morphologyEx(gradient, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (19, 19)))
-local_max = ski.feature.peak_local_max(gradient_smoothed, min_distance=30)
-fg_local_max = np.ones_like(gradient_smoothed)
-fg_local_max[tuple(local_max.T)] = 255
+local_max = ski.feature.peak_local_max(img_blured, min_distance=50)     # Coord. von Maxima Peaks im Bild ermitteln
+fg_local_max = np.ones_like(img_blured)
+fg_local_max[tuple(local_max.T)] = 255                                  # Peaks in neuem Bild einzeichnen
 fg_local_max[fg_local_max!=255] = 0
 
 '''plt.figure()
 plt.imshow(fg_local_max)
 plt.title('Foreground Local Max')'''
 
-fg_threshold = np.ones_like(gradient_smoothed)
-fg_threshold[gradient_smoothed>1] = 255
-fg_threshold[gradient_smoothed<=1] = 0 
-fg_threshold = cv2.dilate(fg_threshold, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15)))
+fg_threshold = np.ones_like(img_blured)                                 # Threshold marker ermitteln 
+fg_threshold[img_blured>148] = 255
+fg_threshold[img_blured<=148] = 0 
+
+fg_threshold = cv2.erode(fg_threshold, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))) # Marker verkleinern und glätten
+fg_threshold = cv2.medianBlur(fg_threshold.astype(np.uint8), 5)
 
 '''plt.figure()
 plt.imshow(fg_threshold)
 plt.title('Foreground Threshold')'''
 
 # background-------------------------------
-# skeletonize
+# SKIZ erstellen
+# Distance map zwischen den Foreground-Markern erstellen
+# Auf der Distance Map watershed anwenden, sodass die Bereiche zwischen den Markern gefüllt werden
+# Watershedlinien entsprechen dem SKIZ
+# Idee: 2. Ableitung müsste Maximas entlang des SKIZ haben. Laplacian auf Distance Map anwenden?
 
-bg_sk = ski.morphology.skeletonize(fg_threshold)
-
-
-'''plt.figure()
-plt.imshow(bg_sk)
-plt.title('Background Threshold')'''
-
-marker_fg_local_max = ndimage.label(fg_local_max)[0]
-marker_fg_threshold = ndimage.label(ski.util.invert(fg_threshold))[0]
+inv_fg = np.zeros_like(fg_threshold)
+inv_fg[fg_threshold==0] = 255
 
 '''plt.figure()
-plt.imshow(marker_fg_bg_local_max)
+plt.imshow(inv_fg)
+plt.title('inv fg')'''
+
+dmap_sk = cv2.distanceTransform(inv_fg.astype(np.uint8), cv2.DIST_L2, 3)
+
+plot_image_to_3D(dmap_sk)
+
+#skiz = ski.filters.gaussian(dmap_sk, 10)           # Bild müsste mehr geglättet werden, sonst zu viele Wendepunkte in Distance Map
+#skiz = cv2.Laplacian(dmap_sk, ddepth=-1)
+
+labels_fg_threshold = ndimage.label(fg_threshold)[0]        # Nummerierung aller BOLBs im Foreground
+
+'''plt.figure()
+plt.imshow(labels_fg_threshold)
+plt.title('labels_sk')'''
+
+skiz = ski.segmentation.watershed(dmap_sk, labels_fg_threshold, watershed_line=True)        # Watershed entlang der Distance Map
+
+skiz_lines = np.zeros_like(skiz)        # Es werden nur die Watershed-Linien benötigt
+skiz_lines[skiz==0] = 1
+
+'''plt.figure()
+plt.imshow(skiz_lines)
+plt.title('SKIZ')'''
+
+
+'''gradient_b = gradient
+gradient_b[gradient>4] = 255
+gradient_b[gradient<=4] = 0
+gradient_for_skeletonize = cv2.dilate(gradient, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3)))'''
+
+
+marker_fg_local_max = ndimage.label(fg_local_max)[0]            
+marker_fg_threshold = ndimage.label(fg_threshold)[0]
+
+'''plt.figure()
+plt.imshow(marker_fg_local_max)
 plt.title('Marker FG-BG local max')
 
 plt.figure()
-plt.imshow(marker_fg_bg_threshold)
+plt.imshow(marker_fg_threshold)
 plt.title('Marker FG-BG threshold')'''
 
-watershed_fg_local_max = ski.segmentation.watershed(gradient, marker_fg_local_max, watershed_line=True)
+gradient = cv2.morphologyEx(img_blured, cv2.MORPH_GRADIENT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3)))   # Gradient für Watershed
+
+watershed_fg_local_max = ski.segmentation.watershed(gradient, marker_fg_local_max, watershed_line=True)     # Watershed ohne Background
 watershed_fg_threshold = ski.segmentation.watershed(gradient, marker_fg_threshold, watershed_line=True)
 
-marker_fg_bg_local_max = marker_fg_local_max + 1
-flood_area_local_max = fg_local_max - bg_sk
+
+
+marker_fg_bg_local_max = marker_fg_local_max + 1                        # Alle Marker werden um 1 erhöht, sodass das Markerlabel 0 frei/unbenutzt ist
+flood_area_local_max = fg_local_max.astype(np.uint8) + skiz_lines       # Das Flutgebiet soll zwischen FG und BG liegen. Addition von FG und BG, dann ist alles ==0 das Flutgebiet
 
 '''plt.figure()
 plt.imshow(flood_area_local_max)
@@ -95,13 +146,13 @@ marker_fg_bg_local_max[flood_area_local_max == 0] = 0
 
 
 marker_fg_bg_threshold = marker_fg_threshold + 1
-flood_area_threshold = fg_threshold - bg_sk
+flood_area_threshold = fg_threshold.astype(np.uint8) + skiz_lines           # eigentliche flood area bei [flood_area==0]
 
 '''plt.figure()
 plt.imshow(flood_area_threshold)
 plt.title('Flood area threshold')'''
 
-marker_fg_bg_threshold[flood_area_threshold == 255] = 0
+marker_fg_bg_threshold[flood_area_threshold == 0] = 0
 
 '''plt.figure()
 plt.imshow(marker_fg_bg_local_max)
@@ -111,7 +162,7 @@ plt.figure()
 plt.imshow(marker_fg_bg_threshold)
 plt.title('Marker FG-BG threshold')'''
 
-watershed_fg_bg_local_max = ski.segmentation.watershed(gradient, marker_fg_bg_local_max, watershed_line=True)
+watershed_fg_bg_local_max = ski.segmentation.watershed(gradient, marker_fg_bg_local_max, watershed_line=True)       # watershed mit FG+BG
 watershed_fg_bg_threshold = ski.segmentation.watershed(gradient, marker_fg_bg_threshold, watershed_line=True)
 
 #---------------------------------------------------------------------------------------------------
