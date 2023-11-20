@@ -31,7 +31,7 @@ def recon_by_dilation_grey(img, kernel, start_iter):
 
 #---------------------------------------------------------------------------------------------------
 # Images
-
+# Bild mit Faktor (Anzahl Pixel) 100%, 120%, 150%, 200%, 500% werden eingelesen
 img100 = cv2.imread('sheet2\image sizes\electrop100.jpg')
 img100 = np.abs(255 - img100)
 img120 = cv2.imread('sheet2\image sizes\electrop120.jpg')
@@ -48,7 +48,7 @@ kernel = np.ones((3, 3), np.uint8)
 #---------------------------------------------------------------------------------------------------
 # global
 
-n = 5
+n = 3           # Anzahl wie oft Berechnet und dann gemittelt wird
 
 time100a = []
 time120a = []
@@ -63,19 +63,21 @@ time200b = []
 time500b = []
 
 #---------------------------------------------------------------------------------------------------
+# Messungen erfolgen nur für den Reconstruction Algorithm, nicht (!) für das Erstellten der Seed-Marker
+
 # Messung 100
 # selfmade
-for i in range(0, n):
+for i in range(0, n):                                                           # selfmade Algorithm wird ausgeführt
     t0_selfmade = time.time()
     img_grey_recon_selfmade, _ = recon_by_dilation_grey(img100, kernel, 7)
     t1_selfmade = time.time()
     time_grey_selfmade = t1_selfmade - t0_selfmade
     time100a = np.append(time100a, time_grey_selfmade)
-    print('time100a', time_grey_selfmade)
-    cv2.imshow('Recon Img100', img_grey_recon_selfmade)
+    #print('time100a', time_grey_selfmade)
+    #cv2.imshow('Recon Img100', img_grey_recon_selfmade)
 
 # scikit
-for i in range(0, n):
+for i in range(0, n):                                                           # Scikit Algorithm wird ausgeführt
     seed_g = cv2.erode(img100, kernel, iterations=7).astype(np.double)
     footprint = img100.astype(np.double)
 
@@ -84,7 +86,8 @@ for i in range(0, n):
     t1_scikit_grey = time.time()
 
     time100b = np.append(time100b, t1_scikit_grey - t0_scikit_grey)
-    print('Time100b', t1_scikit_grey - t0_scikit_grey)
+    #print('Time100b', t1_scikit_grey - t0_scikit_grey)
+
 
 #---------------------------------------------------------------------------------------------------
 # Messung 120
@@ -160,6 +163,7 @@ for i in range(0, n):
     time500b = np.append(time500b, t1_scikit_grey - t0_scikit_grey)
 
 
+# Zeiten werden gemittelt und in einem Vektor zusammengeführt
 # selfmade
 meanTime100a = np.mean(time100a)
 meanTime120a = np.mean(time120a)
@@ -179,6 +183,7 @@ meanTime500b = np.mean(time500b)
 Time_scikit = [meanTime100b, meanTime120b, meanTime150b, meanTime200b, meanTime500b]
 
 
+# Darstellung
 x_Axis = [1, 1.2, 1.5, 2, 5]
 
 
@@ -189,3 +194,6 @@ plt.plot(x_Axis, Time_scikit, 'b', label="scikit")
 plt.legend()
 plt.show()
 
+print('La fin') 
+
+cv2.waitKey(0)
