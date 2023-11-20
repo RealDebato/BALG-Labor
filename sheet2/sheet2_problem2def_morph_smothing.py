@@ -9,7 +9,7 @@ import time
 #---------------------------------------------------------------------------------------------------
 # functions
 
-def recon_opening(img, kernel, start_iter):
+def recon_opening(img, kernel, start_iter):                 # Recon opening wie in 2c, Seed ist eine Erosion (Gleiches gilt für closing vice versa)
     img = img.astype(np.double)
     
     start = cv2.erode(img, kernel, iterations=start_iter)
@@ -70,6 +70,9 @@ cv2.imshow('Inv Orginal', inv_img)
 
 #---------------------------------------------------------------------------------------------------
 # main
+# Zeitmessung jeweils ohne die Seed-Erstellung
+# Zeitmessungen für smoothing mit opening closing by reconstruction vice versa (2x)
+# Zeitmessung closing by reconstruction and opening by reconstruction
 
 t0 = time.time()
 
@@ -85,6 +88,7 @@ smoothing_by_reconstrucion_op_cl, _ = recon_closing(recon_by_opening, kernel, 7)
 t1 = time.time()
 time_smooth_op_cl = t1 - t0
 
+# smothing mit morphological opening and closing vice versa (2x)
 
 t0 = time.time()
 opening = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel, iterations=3)
