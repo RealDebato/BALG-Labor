@@ -34,7 +34,7 @@ def image_from_cifar10(data_vektor):
 #---------------------------------------------------------------------------------------------------
 # globals
 
-nr_bild = 999
+nr_bild = 0
 
 
 #---------------------------------------------------------------------------------------------------
@@ -51,12 +51,33 @@ labels_data_batch_1 = data_batch_1[b'labels']
 
 Bild1 = image_from_cifar10(pixel_data_batch_1[nr_bild,:])
 
+Entscheidungsraum_x = np.linspace(0, 3072, 1)
+Entscheidungsraum_y = np.linspace(0, 256, 1)
+Entscheidungsraum_z = np.linspace(0, 9999, 1)
+Entscheidungsraum = np.dstack(Entscheidungsraum_x, Entscheidungsraum_y, Entscheidungsraum_z)
+
+for Bild_nummer in range(0, 9999):
+    Entscheidungsraum[:,:,Bild_nummer] = [Entscheidungsraum_x, pixel_data_batch_1[Bild_nummer,:], Bild_nummer]
+
+
+
+# Wie sehen die Entscheidungsräume aus??
+# Features sollen die Pixel sein, d. h.
+# Entscheidungsraum x: Pixelnummer entsprechend aus dem .bin
+# Entscheidungsraum y: Pixelwert
+# Entscheidungsraum z: Bildnummer
+
+
 #---------------------------------------------------------------------------------------------------
 # output
 
-plt.figure
+'''plt.figure
 plt.imshow(Bild1)
-plt.title(label_decoder[b'label_names'][labels_data_batch_1[nr_bild]])
+plt.title(label_decoder[b'label_names'][labels_data_batch_1[nr_bild]])'''
+
+plt.figure
+plt.imshow(Entscheidungsraum)
+plt.title('Entscheidungsraum')
 
 
 #---------------------------------------------------------------------------------------------------
