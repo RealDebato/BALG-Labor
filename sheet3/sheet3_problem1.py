@@ -7,6 +7,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import skimage as ski
 import time
 
+
 #---------------------------------------------------------------------------------------------------
 # functions
 
@@ -147,23 +148,39 @@ def distance_kNN(test, training_class, k):
     for number_trainings_img in range(0, training_class.shape[0]):        # delta_sum[0] entspricht der Differenz zwischen dem Test bild und dem 1. Trainingsbild
         delta_sum_single = delta[number_trainings_img].sum()
         delta_sum = np.append(delta_sum, delta_sum_single)
+    
+    index_k_nearest = np.argpartition(delta_sum, k)
+    k_nearest_class_0 = delta_sum[index_k_nearest[:k]]
 
-    sorted_delta_sum = np.sort(delta_sum, axis=None, kind='heapsort')
-    k_nearest_class_0 = sorted_delta_sum[0:k]
+    '''sorted_delta_sum = np.sort(delta_sum, axis=None, kind='heapsort')
+    k_nearest_class_0 = sorted_delta_sum[0:k]'''
     return k_nearest_class_0
 
 
-nearest_class_0 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_9, 3)
+nearest_class_0 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_0, 3)
+nearest_class_1 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_1, 3)
+nearest_class_2 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_2, 3)
+nearest_class_3 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_3, 3)
+nearest_class_4 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_4, 3)
+nearest_class_5 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_5, 3)
+nearest_class_6 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_6, 3)
+nearest_class_7 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_7, 3)
+nearest_class_8 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_8, 3)
+nearest_class_9 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_9, 3)
 
 
-print(nearest_class_0)
-print(len(nearest_class_0))
+
+stack_nearest_classes = np.stack((nearest_class_0, nearest_class_1, nearest_class_2, nearest_class_3, nearest_class_4, nearest_class_5, nearest_class_6, nearest_class_7, nearest_class_8, nearest_class_9))
+
+nearest_classes = []
+
+for i in range(0, 3):
+    index_min = np.argpartition(stack_nearest_classes, k)
+    nearest_classes = np.append(index_min[0])
+    stack_nearest_classes[index_min]
 
 
-
-# abs. Diff vom jeweiligen (0-3071) Pixelwert zwischen jedem Bildvektor in pixel_data_class und dem Testbild
-# Diff zu der Klasse 0
-#for px_pos in range(0, 3072):
+print(nearest_classes)
 
 
 
