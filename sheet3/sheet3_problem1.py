@@ -41,14 +41,18 @@ nr_bild = 29
 #---------------------------------------------------------------------------------------------------
 # main
 
+data_reduction = 1000       # max. 10.000
+
 label_decoder = unpickle(R'sheet3\CIFAR\batches.meta.txt')             # Index = label nummer 
 print(label_decoder[b'label_names'])
 
 data_batch_1 = unpickle(R'sheet3\CIFAR\data_batch_1.bin')
 
 pixel_data_batch_1 = np.asarray(data_batch_1[b'data'])
+pixel_data_batch_1 = pixel_data_batch_1[0:data_reduction, :]
 
 labels_data_batch_1 = np.asarray(data_batch_1[b'labels'])
+labels_data_batch_1 = labels_data_batch_1[0:data_reduction]
 
 # Einteilung in 4 Quartiele für 4-fold cross-validation
 split = 4
@@ -124,7 +128,7 @@ pixel_data_class_9 = np.asarray(pixel_data_batch_1[class_9, :][0])
 
 
 
-k = 3
+k = 10
 
 delta = []
 delta_sum = []
@@ -157,6 +161,7 @@ def distance_kNN(test, training_class, k):
     return k_nearest_class_0
 
 
+
 nearest_class_0 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_0, 3)
 nearest_class_1 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_1, 3)
 nearest_class_2 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_2, 3)
@@ -168,21 +173,26 @@ nearest_class_7 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_7, 3)
 nearest_class_8 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_8, 3)
 nearest_class_9 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_9, 3)
 
-
-
 stack_nearest_classes = np.stack((nearest_class_0, nearest_class_1, nearest_class_2, nearest_class_3, nearest_class_4, nearest_class_5, nearest_class_6, nearest_class_7, nearest_class_8, nearest_class_9))
 
-nearest_classes = []
+k_min = np.partition(np.ndarray.flatten(stack_nearest_classes), k)[:k]
+print(k_min)
+index_k_min_old = np.zeros_like(stack_nearest_classes, dtype=np.bool_)
 
-for i in range(0, 3):
-    index_min = np.argpartition(stack_nearest_classes, k)
-    nearest_classes = np.append(index_min[0])
-    stack_nearest_classes[index_min]
+for min in k_min:
+    index_k_min = stack_nearest_classes == min
+    index_k_min = np.logical_or(index_k_min, index_k_min_old)
+    index_k_min_old = index_k_min
 
+nearest_classes = np.argwhere(index_k_min==True)[:,0]
+print('Nearest Classes', nearest_classes)
 
-print(nearest_classes)
+solution_class = np.argmax(np.bincount(nearest_classes))    # Was wenn es zwei max. Bins gibt? Idee: Die Ausgabe erfolgt als Wahrscheinlichkeit für jede Klasse
+print('Solution', solution_class)
 
+solution_correct = solution_class == labels_data_batch_1[0]
 
+print(solution_correct)
 
 
 #---------------------------------------------------------------------------------------------------
