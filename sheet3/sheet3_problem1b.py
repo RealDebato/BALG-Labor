@@ -112,8 +112,8 @@ labels_data_batch_1_75_100 = labels_data_batch_1[3*split_col:4*split_col]
 # Labels Training
 labels_data_batch_1_0_75 = labels_data_batch_1[0:3*split_col]
 labels_data_batch_1_25_100 = labels_data_batch_1[split_col:4*split_col]
-labels_data_batch_1_without_25_50 = np.delete(pixel_data_batch_1, np.s_[split_col:2*split_col], 1)
-labels_data_batch_1_without_50_75 = np.delete(pixel_data_batch_1, np.s_[split_col:2*split_col], 1)
+labels_data_batch_1_without_25_50 = np.delete(pixel_data_batch_1, np.s_[split_col:2*split_col])
+labels_data_batch_1_without_50_75 = np.delete(pixel_data_batch_1, np.s_[split_col:2*split_col])
 
 
 
@@ -220,9 +220,12 @@ Test = pixel_data_batch_1_25_50
 labels_test = labels_data_batch_1_25_50
 Training = pixel_data_batch_1_without_25_50
 labels_training = labels_data_batch_1_without_25_50
+print(Training.shape)
+
 
 # feature space 0 --> airplane
 class_0 = np.where(labels_training==0)
+print(class_0)
 pixel_data_class_0 = np.asarray(Training[class_0, :][0])
 
 # feature space 1 --> automobile
