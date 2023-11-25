@@ -35,8 +35,11 @@ def image_from_cifar10(data_vektor):
 #---------------------------------------------------------------------------------------------------
 # globals
 
-nr_bild = 29
+nr_bild = 500
+k = 10
 
+delta = []
+delta_sum = []
 
 #---------------------------------------------------------------------------------------------------
 # main
@@ -68,8 +71,8 @@ pixel_data_batch_1_75_100 = pixel_data_batch_1[3*split_col:4*split_col, :]
 # Trainingsdaten
 pixel_data_batch_1_0_75 = pixel_data_batch_1[0:3*split_col, :]
 pixel_data_batch_1_25_100 = pixel_data_batch_1[split_col:4*split_col, :]
-pixel_data_batch_1_without_25_50 = np.delete(pixel_data_batch_1, np.s_[split_col:2*split_col], 1)
-pixel_data_batch_1_without_50_75 = np.delete(pixel_data_batch_1, np.s_[split_col:2*split_col], 1)
+pixel_data_batch_1_without_25_50 = np.delete(pixel_data_batch_1, np.arange(split_col, 2*split_col), 0)
+pixel_data_batch_1_without_50_75 = np.delete(pixel_data_batch_1, np.arange(split_col, 2*split_col), 0)
 
 Bild1 = image_from_cifar10(pixel_data_batch_1[nr_bild,:])
 
@@ -128,10 +131,7 @@ pixel_data_class_9 = np.asarray(pixel_data_batch_1[class_9, :][0])
 
 
 
-k = 10
 
-delta = []
-delta_sum = []
 
 
 # Differenz von Test Img zu Class X-------------------------
@@ -162,16 +162,16 @@ def distance_kNN(test, training_class, k):
 
 
 
-nearest_class_0 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_0, 3)
-nearest_class_1 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_1, 3)
-nearest_class_2 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_2, 3)
-nearest_class_3 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_3, 3)
-nearest_class_4 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_4, 3)
-nearest_class_5 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_5, 3)
-nearest_class_6 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_6, 3)
-nearest_class_7 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_7, 3)
-nearest_class_8 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_8, 3)
-nearest_class_9 = distance_kNN(pixel_data_batch_1[0], pixel_data_class_9, 3)
+nearest_class_0 = distance_kNN(pixel_data_batch_1[nr_bild], pixel_data_class_0, k)
+nearest_class_1 = distance_kNN(pixel_data_batch_1[nr_bild], pixel_data_class_1, k)
+nearest_class_2 = distance_kNN(pixel_data_batch_1[nr_bild], pixel_data_class_2, k)
+nearest_class_3 = distance_kNN(pixel_data_batch_1[nr_bild], pixel_data_class_3, k)
+nearest_class_4 = distance_kNN(pixel_data_batch_1[nr_bild], pixel_data_class_4, k)
+nearest_class_5 = distance_kNN(pixel_data_batch_1[nr_bild], pixel_data_class_5, k)
+nearest_class_6 = distance_kNN(pixel_data_batch_1[nr_bild], pixel_data_class_6, k)
+nearest_class_7 = distance_kNN(pixel_data_batch_1[nr_bild], pixel_data_class_7, k)
+nearest_class_8 = distance_kNN(pixel_data_batch_1[nr_bild], pixel_data_class_8, k)
+nearest_class_9 = distance_kNN(pixel_data_batch_1[nr_bild], pixel_data_class_9, k)
 
 stack_nearest_classes = np.stack((nearest_class_0, nearest_class_1, nearest_class_2, nearest_class_3, nearest_class_4, nearest_class_5, nearest_class_6, nearest_class_7, nearest_class_8, nearest_class_9))
 
@@ -190,18 +190,20 @@ print('Nearest Classes', nearest_classes)
 solution_class = np.argmax(np.bincount(nearest_classes))    # Was wenn es zwei max. Bins gibt? Idee: Die Ausgabe erfolgt als Wahrscheinlichkeit für jede Klasse
 print('Solution', solution_class)
 
-solution_correct = solution_class == labels_data_batch_1[0]
+solution_correct = solution_class == labels_data_batch_1[nr_bild]
 
-print(solution_correct)
+
+print('predicted class:', solution_class)
+print('prediction correct:', solution_correct)
 
 
 #---------------------------------------------------------------------------------------------------
 # output
 
 
-'''plt.figure
+plt.figure
 plt.imshow(Bild1)
-plt.title(label_decoder[b'label_names'][labels_data_batch_1[nr_bild]])'''
+plt.title(label_decoder[b'label_names'][labels_data_batch_1[nr_bild]])
 
 
 

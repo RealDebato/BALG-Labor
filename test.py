@@ -23,19 +23,6 @@ A = np.array([[ 7367819. , 8234613.,  8265938.],
 
 print(A)
 
+A = np.delete(A, np.arange(0, 2), 0)
 
-k_min = np.partition(np.ndarray.flatten(A), 3)[:3]
-print(k_min)
-index_k_min_old = np.zeros_like(A, dtype=np.bool_)
-
-for min in k_min:
-    index_k_min = A == min
-    index_k_min = np.logical_or(index_k_min, index_k_min_old)
-    index_k_min_old = index_k_min
-
-nearest_classes = np.argwhere(index_k_min==True)[:,0]
-
-sol_class = np.argmax(np.bincount(nearest_classes))
-
-print('nearest classes', nearest_classes)
-print('solution', sol_class)
+print(A)
