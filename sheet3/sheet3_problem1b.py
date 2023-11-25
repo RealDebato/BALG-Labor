@@ -68,7 +68,7 @@ accuracy_k = []
 #---------------------------------------------------------------------------------------------------
 # data
 
-data_reduction = 1000       # max. 10.000
+data_reduction = 200       # max. 10.000
 if data_reduction > 10000:
     data_reduction = 10000
 
@@ -76,7 +76,7 @@ if data_reduction > 10000:
 label_decoder = unpickle(R'sheet3\CIFAR\batches.meta.txt')             # Index = label nummer 
 #print(label_decoder[b'label_names'])
 
-data_batch_1 = unpickle(R'sheet3\CIFAR\data_batch_1.bin')
+data_batch_1 = unpickle(R'sheet3\CIFAR\data_batch_2.bin')
 
 pixel_data_batch_1 = np.asarray(data_batch_1[b'data'])
 pixel_data_batch_1 = pixel_data_batch_1[0:data_reduction, :]
