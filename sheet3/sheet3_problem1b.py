@@ -61,14 +61,14 @@ def distance_kNN(test, training_class, k):
 # globals
 
 nr_bild = 29
-k_vec = np.arange(1, 6)
+k_vec = np.arange(1, 16)
 solution_vector = []
 accuracy_k = []
 
 #---------------------------------------------------------------------------------------------------
 # data
 
-data_reduction = 200       # max. 10.000
+data_reduction = 1000       # max. 10.000
 if data_reduction > 10000:
     data_reduction = 10000
 
@@ -99,7 +99,7 @@ pixel_data_batch_1_75_100 = pixel_data_batch_1[3*split_col:4*split_col, :]
 pixel_data_batch_1_0_75 = pixel_data_batch_1[0:3*split_col, :]
 pixel_data_batch_1_25_100 = pixel_data_batch_1[split_col:4*split_col, :]
 pixel_data_batch_1_without_25_50 = np.delete(pixel_data_batch_1, np.arange(split_col, 2*split_col), 0)
-pixel_data_batch_1_without_50_75 = np.delete(pixel_data_batch_1, np.arange(split_col, 2*split_col), 0)
+pixel_data_batch_1_without_50_75 = np.delete(pixel_data_batch_1, np.arange(2*split_col, 3*split_col), 0)
 
 # Labels Test
 labels_data_batch_1_0_25 = labels_data_batch_1[0:split_col]
@@ -111,7 +111,7 @@ labels_data_batch_1_75_100 = labels_data_batch_1[3*split_col:4*split_col]
 labels_data_batch_1_0_75 = labels_data_batch_1[0:3*split_col]
 labels_data_batch_1_25_100 = labels_data_batch_1[split_col:4*split_col]
 labels_data_batch_1_without_25_50 = np.delete(labels_data_batch_1, np.arange(split_col, 2*split_col))
-labels_data_batch_1_without_50_75 = np.delete(labels_data_batch_1, np.arange(split_col, 2*split_col))
+labels_data_batch_1_without_50_75 = np.delete(labels_data_batch_1, np.arange(2*split_col, 3*split_col))
 
 
 
@@ -190,7 +190,7 @@ for k in k_vec:
         stack_nearest_classes = np.stack((nearest_class_0, nearest_class_1, nearest_class_2, nearest_class_3, nearest_class_4, nearest_class_5, nearest_class_6, nearest_class_7, nearest_class_8, nearest_class_9))
 
         k_min = np.partition(np.ndarray.flatten(stack_nearest_classes), k)[:k]
-        #print('k_min', k_min)
+        print('k_min Q1', k_min)
         index_k_min_old = np.zeros_like(stack_nearest_classes, dtype=np.bool_)
 
         for min in k_min:
@@ -281,7 +281,7 @@ for k in k_vec:
         stack_nearest_classes = np.stack((nearest_class_0, nearest_class_1, nearest_class_2, nearest_class_3, nearest_class_4, nearest_class_5, nearest_class_6, nearest_class_7, nearest_class_8, nearest_class_9))
 
         k_min = np.partition(np.ndarray.flatten(stack_nearest_classes), k)[:k]
-        
+        print('k_min Q2', k_min)
         index_k_min_old = np.zeros_like(stack_nearest_classes, dtype=np.bool_)
 
         for min in k_min:
@@ -370,7 +370,7 @@ for k in k_vec:
         stack_nearest_classes = np.stack((nearest_class_0, nearest_class_1, nearest_class_2, nearest_class_3, nearest_class_4, nearest_class_5, nearest_class_6, nearest_class_7, nearest_class_8, nearest_class_9))
 
         k_min = np.partition(np.ndarray.flatten(stack_nearest_classes), k)[:k]
-        
+        print('k_min Q3', k_min)
         index_k_min_old = np.zeros_like(stack_nearest_classes, dtype=np.bool_)
 
         for min in k_min:
@@ -459,7 +459,7 @@ for k in k_vec:
         stack_nearest_classes = np.stack((nearest_class_0, nearest_class_1, nearest_class_2, nearest_class_3, nearest_class_4, nearest_class_5, nearest_class_6, nearest_class_7, nearest_class_8, nearest_class_9))
 
         k_min = np.partition(np.ndarray.flatten(stack_nearest_classes), k)[:k]
-        #print(k_min)
+        print('k_min Q4', k_min)
         index_k_min_old = np.zeros_like(stack_nearest_classes, dtype=np.bool_)
 
         for min in k_min:

@@ -35,8 +35,8 @@ def image_from_cifar10(data_vektor):
 #---------------------------------------------------------------------------------------------------
 # globals
 
-nr_bild = 500
-k = 10
+nr_bild = 2
+k = 4
 
 delta = []
 delta_sum = []
@@ -44,7 +44,7 @@ delta_sum = []
 #---------------------------------------------------------------------------------------------------
 # main
 
-data_reduction = 1000       # max. 10.000
+data_reduction = 10000       # max. 10.000
 
 label_decoder = unpickle(R'sheet3\CIFAR\batches.meta.txt')             # Index = label nummer 
 print(label_decoder[b'label_names'])
