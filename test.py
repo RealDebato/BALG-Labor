@@ -8,21 +8,18 @@ import skimage as ski
 import time
 
 
+training_batch = [[2, 5, 8],[4, 7, 1],[2, 2, 0],[9, 8, 3],[0, 1, 4]]
+test_batch = [[4, 1, 7],[2, 1, 1],[8, 7, 5]]
+training_batch = np.asarray(training_batch)
+test_batch = np.asarray(test_batch)
 
 
-A = np.array([[ 7367819. , 8234613.,  8265938.],
- [ 9296495. , 9275766. , 9434138.],
- [ 6132123. , 6213317. , 6264519.],
- [ 5620181.,  6887595.,  7043724.],
- [ 6209436. , 6224860. , 6289059.],
- [ 6915525. , 6619657. , 7187072.],
- [ 6913128.  ,      0. , 6927035.],
- [ 7330454.,  6674827.,  6604806.],
- [ 8718731. , 8462096.,  8392504.],
- [10346119. ,10563440., 11016134.]])
+dists = np.sum(np.square(training_batch), axis=1) + np.sum(np.square(test_batch), axis=1)[:, np.newaxis] - 2 * np.dot(test_batch, training_batch.T)
+print(np.sum(np.square(training_batch), axis=1))
+print(np.sum(np.square(test_batch), axis=1)[:, np.newaxis])
+print(np.sum(np.square(training_batch), axis=1) + np.sum(np.square(test_batch), axis=1)[:, np.newaxis])
+print(2 * np.dot(test_batch, training_batch.T))
+print(dists)
 
-print(A)
 
-A = np.delete(A, np.arange(0, 2), 0)
 
-print(A)
