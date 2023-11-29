@@ -34,11 +34,20 @@ def norm_img(data_train, data_test):
 
     return data_train_norm, data_test_norm
 
-def features_HOG(data_train, labels_train):
+def rgb_to_hue(pixel_data):
+    
+    r, g, b = np.split(pixel_data, 3, axis=1)
+    rgb = np.stack((r, g, b), axis=2)
+    max_color_channel = np.argmax(rgb, axis=2) 
 
-def features_hist_hsv(data_train, labels_train):
+    Hue = np.zeros_like(max_color_channel)
+    Hue[max_color_channel==0] = (rgb[..., 1]-rgb[..., 2])[max_color_channel==0]
+    Hue[max_color_channel==1] = (rgb[..., 2]-rgb[..., 0])[max_color_channel==1]
+    Hue[max_color_channel==2] = (rgb[..., 2]-rgb[..., 0])[max_color_channel==2]
 
-def rgb_to_hsv(pixel_data):
+    return Hue
+
+
 
 
 #---------------------------------------------------------------------------------
@@ -56,6 +65,9 @@ labels_test = np.asarray(testing[b'labels'])
 data_validate = np.asarray(validation[b'data'])[0:1000]
 labels_validate = np.asarray(validation[b'labels'])[0:1000]
 
+data_train_hue = rgb_to_hue(data_train)
+data_test_hue = rgb_to_hue(data_test)
+data_validate_hue = rgb_to_hue(data_validate)
 
 #---------------------------------------------------------------------------------
 # main
