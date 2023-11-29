@@ -68,24 +68,24 @@ def compute_distances(test_batch, training_batch):
     num_train = training_batch.shape[0]
     dists = np.zeros((num_test, num_train))
     dists = np.sum(np.square(training_batch), axis=1) + np.sum(np.square(test_batch), axis=1)[:, np.newaxis] - 2 * np.dot(test_batch, training_batch.T)
-        
+    # dist ist array mit dist zwischen (test, training)
     return dists
 
 def predict_labels(dists, labels_train, k=1):
         dists = np.asarray(dists)
         num_test = dists.shape[0]
-        y_pred = np.zeros(num_test)
-        for i in range(num_test):
-            sorted_dist = np.argsort(dists[i])
+        y_pred = np.zeros(num_test) 
+        for i in range(num_test):   # für jedes Testbild werden die k-nächsten Klassen in y_pred ausgegeben
+            sorted_dist = np.argsort(dists[i])  # np.argpartition sollte schneller sein?
             closest_y = list(labels_train[sorted_dist[0:k]])
-            y_pred[i] = (np.argmax(np.bincount(closest_y)))
+            y_pred[i] = (np.argmax(np.bincount(closest_y))) #predicted class ist die häufigste der k-nächsten Klassen
             
         return y_pred
 
 def validate_prediction(prediction, labels_test):
     accuracy = np.zeros(len(labels_test))
     for i in range(0, len(labels_test)):
-        accuracy[i] = prediction[i] == labels_test[i]
+        accuracy[i] = prediction[i] == labels_test[i] # Vergleich zwischen prediction und tatsächlichem label
     return accuracy
 
 
@@ -165,9 +165,9 @@ data_train_folds = np.array_split(pixel_data_batch_1_0_75_normalized, num_folds)
 lbl_train_folds = np.array_split(labels_data_batch_1_0_75, num_folds)
 k_to_accuracies = {}
 
-for k in k_choices:
+for k in k_choices: # mit verschiedenen k testen
     k_to_accuracies[k] = []
-    for num_knn in range(0, num_folds):
+    for num_knn in range(0, num_folds): # Test und Training in die Folds unterteilen
         data_test = data_train_folds[num_knn]
         lbl_test = lbl_train_folds[num_knn]
         data_train = data_train_folds
@@ -178,7 +178,7 @@ for k in k_choices:
         lbl_train = np.delete(lbl_train, num_knn, 0)
         lbl_train = np.concatenate((lbl_train), axis=0)
 
-    
+        # für k und fold das kNN berechnene und accuracy bestimmen
         dists = compute_distances(data_test, data_train)
         y_test_pred = predict_labels(dists, lbl_train, k)
 
