@@ -47,7 +47,7 @@ class SoftmaxClassifier():
 
     def loss(self, X_batch, y_batch, reg):
         loss = 0.0
-        dW = np.zeros_like(self.W)
+        dW = np.zeros_like(self.W)      # Gradient von W
 
         num_train = X_batch.shape[0]
         scores = X_batch.dot(self.W)    # s = W*x
@@ -56,7 +56,7 @@ class SoftmaxClassifier():
         probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
         correct_logprobs = -np.log(probs[range(num_train), y_batch])    # cross-entropy loss (115)
         loss = np.sum(correct_logprobs) / num_train     # loss function (120)
-        loss += 0.5 * reg * np.sum(self.W * self.W)
+        loss += 0.5 * reg * np.sum(self.W * self.W)     #
 
         # Differenz/Gradient der Gewichtungen W bestimmen
         dscores = probs     # Hierfür werden die Wahrscheinlichenkeiten verwendet

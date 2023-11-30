@@ -13,23 +13,13 @@ test_batch = [[4, 1, 7],[2, 1, 1],[8, 7, 5]]
 training_batch = np.asarray(training_batch)
 test_batch = np.asarray(test_batch)
 
+pixel_data = training_batch
 
-num_img, num_pixel = training_batch.shape
-#training_batch /= 255
-r, g, b = np.split(training_batch, 3, axis=1)
-print(r, g, b)
+num_images = pixel_data.shape[0]
+print(num_images)
+r, g, b = np.split(pixel_data, 3, axis=1)
 rgb = np.stack((r, g, b), axis=2)
-print('RGB:', rgb)
-max_color_channel = np.argmax(rgb, axis=2) 
-print('max Color:', max_color_channel)
-
-Hue_max_r = rgb[:,:, 1]-rgb[:,:, 2]
-Hue_max_g = rgb[:,:, 2]-rgb[:,:, 0]
-Hue_max_b = rgb[:,:, 0]-rgb[:,:, 1]
-
-Hue = np.zeros_like(max_color_channel)
-Hue[max_color_channel==0] = (rgb[..., 1]-rgb[..., 2])[max_color_channel==0]
-Hue[max_color_channel==1] = (rgb[..., 2]-rgb[..., 0])[max_color_channel==1]
-Hue[max_color_channel==2] = (rgb[..., 2]-rgb[..., 0])[max_color_channel==2]
-
-print('Hue:', Hue)
+#rgb = np.split(rgb, num_images, axis=0)
+print(rgb)    
+hog = ski.feature.hog(rgb, orientations=1, pixels_per_cell=(1, 2), cells_per_block=(1, 1), visualize=False, channel_axis=2)
+print(hog)
