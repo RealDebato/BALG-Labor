@@ -159,12 +159,83 @@ def classification_hog(pixel_data):
     pixel_data = pixel_data.reshape(num_images, 3, 32, 32).transpose(0,2,3,1).astype("float")
     hog_list = []
     for img in range(0, num_images):
-        hog = ski.feature.hog(pixel_data[img], orientations=orientations, pixels_per_cell=pixels_per_cell, cells_per_block=cells_per_block, block_norm='L2', visualize=False, feature_vector=True, channel_axis=2)
-        hog_list = np.append(hog_list, hog, axis=0)
+        hog_feats = ski.feature.hog(pixel_data[img], orientations=orientations, pixels_per_cell=pixels_per_cell, cells_per_block=cells_per_block, block_norm='L1', visualize=False, feature_vector=True, channel_axis=2)
+        hog_list = np.append(hog_list, hog_feats)
     
     hog_list = np.reshape(hog_list, (num_images, len_hog))
-    
+    print(hog_list)
+    print(hog_list.shape)
     return hog_list
+
+def CrossValidation(data_train, lbl_train):
+    num_folds = 5
+    k_choices = [1, 3, 5, 8, 10, 12, 15, 20, 50, 100]
+
+    data_train_folds = []
+    lbl_train_folds = []
+
+    data_train_folds = np.array_split(data_train, num_folds)
+    lbl_train_folds = np.array_split(lbl_train, num_folds)
+    k_to_accuracies = {}
+
+    for k in k_choices:
+        k_to_accuracies[k] = []
+        for num_knn in range(0, num_folds):
+            data_test = data_train_folds[num_knn]
+            lbl_test = lbl_train_folds[num_knn]
+            data_train = data_train_folds
+            lbl_train = lbl_train_folds
+
+            temp = np.delete(data_train, num_knn, 0)
+            data_train = np.concatenate((temp), axis=0)
+            lbl_train = np.delete(lbl_train, num_knn, 0)
+            lbl_train = np.concatenate((lbl_train), axis=0)
+
+            classifier = KNearestNeighbor()
+            classifier.train(data_train, lbl_train)
+            dists = classifier.compute_distances(data_test)
+            y_test_pred = classifier.predict_labels(dists, k)
+
+            num_correct = np.sum(y_test_pred == lbl_test)
+            accuracy = float(num_correct) / num_test
+            k_to_accuracies[k].append(accuracy)
+
+    print("Printing 5-fold accuracies for varying values of k:")
+    for k in sorted(k_to_accuracies):
+        for accuracy in k_to_accuracies[k]:
+            print(f'k = {k}, accuracy = {accuracy}')
+
+    plt.figure(figsize=(14, 4))
+    for k in k_choices:
+        accuracies = k_to_accuracies[k]
+        plt.scatter([k] * len(accuracies), accuracies)
+
+    # plot the trend line with error bars that correspond to standard deviation
+    accuracies_mean = np.array([np.mean(v) for k, v in sorted(k_to_accuracies.items())])
+    accuracies_std = np.array([np.std(v) for k, v in sorted(k_to_accuracies.items())])
+
+    plt.errorbar(k_choices, accuracies_mean, yerr=accuracies_std)
+    plt.title('Cross-validation on k')
+    plt.xlabel('k')
+    plt.xticks(np.arange(min(k_choices), max(k_choices), 2))
+    plt.ylabel('Cross-validation accuracy')
+    plt.grid(color = 'black', linestyle = '--', linewidth = 0.5)
+    plt.grid(True)
+    plt.show()
+
+def classifyKNN(data_train, lbl_train, data_test, lbl_test, set_k=3):
+    classifier = KNearestNeighbor()
+    classifier.train(data_train, lbl_train)
+    dists = classifier.compute_distances(data_test)
+    y_test_pred = classifier.predict_labels(dists, k=set_k)
+
+    num_correct = np.sum(y_test_pred == lbl_test)
+    accuracy = float(num_correct) / num_test
+    print('\nResults:')
+    print(f'Got {num_correct} / {num_test} correct => accuracy: {accuracy * 100}%')   
+
+
+
 #---------------------------------------------------------------------------------
 # data
 #---------------------------------------------------------------------------------
@@ -173,12 +244,16 @@ training = unpickle(R'sheet3\CIFAR\data_batch_1.bin')
 testing = unpickle(R'sheet3\CIFAR\test_batch.bin')
 validation = unpickle(R'sheet3\CIFAR\data_batch_2.bin')
 
-data_train = np.asarray(training[b'data'])[0:10]
-labels_train = np.asarray(training[b'labels'])[0:10]
-data_test = np.asarray(testing[b'data'])[0:10]
-labels_test = np.asarray(testing[b'labels'])[0:10]
-data_validate = np.asarray(validation[b'data'])[0:10]
-labels_validate = np.asarray(validation[b'labels'])[0:10]
+num_train = 2000
+num_test = 200
+num_validate = 10
+
+data_train = np.asarray(training[b'data'])[0:num_train]
+labels_train = np.asarray(training[b'labels'])[0:num_train]
+data_test = np.asarray(testing[b'data'])[0:num_test]
+labels_test = np.asarray(testing[b'labels'])[0:num_test]
+data_validate = np.asarray(validation[b'data'])[0:num_validate]
+labels_validate = np.asarray(validation[b'labels'])[0:num_validate]
 
 # features----------------------------------------------------
 data_train_hue = rgb_to_hue(data_train)
@@ -193,12 +268,12 @@ features_train = np.concatenate((data_train_hue, data_train_hog), axis=1)
 features_test = np.concatenate((data_test_hue, data_test_hog), axis=1)
 features_validate = np.concatenate((data_validate_hue, data_validate_hog), axis=1)
 
+
 #---------------------------------------------------------------------------------
 # main
 #---------------------------------------------------------------------------------
 
-
-
+classifyKNN(data_train_hue, labels_train, data_test_hue, labels_test, 3)
 
 
 
