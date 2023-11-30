@@ -37,30 +37,6 @@ def softmax(x):
     prob = ex/np.sum(ex)
     return prob
 
-'''def distance_kNN(test, img_training, labels_training, k):
-    img_training = np.asarray(img_training)
-    img_training = img_training.astype(np.double)
-    test = np.asarray(test)
-    test = test.astype(np.double)
-    
-    delta = []
-    delta_sum = []
-    for number_trainings_img in range(0, img_training.shape[0]):
-        # new row for new image to compare 
-        diff = (test - img_training[number_trainings_img]) **2
-        delta = np.append(delta, diff)
-
-    delta = np.split(delta, img_training.shape[0])
-    #print('training_class.shape', training_class.shape)
-    for number_trainings_img in range(0, img_training.shape[0]):        # delta_sum[0] entspricht der Differenz zwischen dem Test bild und dem 1. Trainingsbild
-        delta_sum_single = delta[number_trainings_img].sum()
-        delta_sum = np.append(delta_sum, delta_sum_single)
-    
-    index_k_nearest = np.argpartition(delta_sum, k)
-    k_nearest_class_0 = delta_sum[index_k_nearest[:k]]
-
-    return k_nearest_class_0'''
-
 def compute_distances(test_batch, training_batch):
     test_batch = np.asarray(test_batch)
     training_batch = np.asarray(training_batch)
@@ -141,7 +117,7 @@ labels_data_batch_1_0_75 = labels_data_batch_1[0:3*split_col]
 
 #--------------------------------------------------------------
 # Testing
-
+print('Data.shape', pixel_data_batch_1_0_75_normalized.shape)
 distances = compute_distances(pixel_data_batch_1_75_100_normalized, pixel_data_batch_1_0_75_normalized)
 distances = np.array(distances)
 print(distances.shape)

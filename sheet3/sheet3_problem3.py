@@ -12,40 +12,6 @@ import time
 # classes
 #---------------------------------------------------------------------------------
 
-class KNearestNeighbor(object):
-    def __init__(self):
-        pass
-
-    def train(self, data, lbl):
-        self.data_train = data
-        self.lbl_train = lbl
-
-    def predict(self, data, k=1, num_loops=0):
-        if num_loops == 0:
-            dists = self.compute_distances(data)
-        else:
-            raise ValueError(f'Invalid value for {num_loops} num_loops')
-        return self.predict_labels(dists, k=k)
-
-    def compute_distances(self, data):
-        num_test = data.shape[0]
-        num_train = self.data_train.shape[0]
-        dists = np.zeros((num_test, num_train))
-        dists = np.sqrt(np.sum(np.square(self.data_train), axis=1) + np.sum(np.square(data), axis=1)[:, np.newaxis] - 2 * np.dot(data, self.data_train.T))
-        pass
-        return dists
-
-    def predict_labels(self, dists, k=1):
-        num_test = dists.shape[0]
-        y_pred = np.zeros(num_test)
-        for i in range(num_test):
-            sorted_dist = np.argsort(dists[i])
-            closest_y = list(self.lbl_train[sorted_dist[0:k]])
-            pass
-            y_pred[i] = (np.argmax(np.bincount(closest_y)))
-            pass
-        return y_pred
-
 class SoftmaxClassifier():
     def __init__(self, x_train, y_train, x_test, y_test):
         self.x_train = x_train
@@ -163,97 +129,59 @@ def classification_hog(pixel_data):
         hog_list = np.append(hog_list, hog_feats)
     
     hog_list = np.reshape(hog_list, (num_images, len_hog))
-    print(hog_list)
-    print(hog_list.shape)
+    
     return hog_list
 
-def CrossValidation(data_train, lbl_train):
-    num_folds = 5
-    k_choices = [1, 3, 5, 8, 10, 12, 15, 20, 50, 100]
+def compute_distances(test_batch, training_batch):
+    test_batch = np.asarray(test_batch)
+    training_batch = np.asarray(training_batch)
+    num_test = test_batch.shape[0]
+    num_train = training_batch.shape[0]
+    dists = np.zeros((num_test, num_train))
+    dists = np.sum(np.square(training_batch), axis=1) + np.sum(np.square(test_batch), axis=1)[:, np.newaxis] - 2 * np.dot(test_batch, training_batch.T)
+    # dist ist array mit dist zwischen (test, training)
+    return dists
 
-    data_train_folds = []
-    lbl_train_folds = []
+def predict_labels(dists, labels_train, k=1):
+        dists = np.asarray(dists)
+        num_test = dists.shape[0]
+        y_pred = np.zeros(num_test) 
+        for i in range(num_test):   # für jedes Testbild werden die k-nächsten Klassen in y_pred ausgegeben
+            sorted_dist = np.argsort(dists[i])  # np.argpartition sollte schneller sein?
+            closest_y = list(labels_train[sorted_dist[0:k]])
+            y_pred[i] = (np.argmax(np.bincount(closest_y))) #predicted class ist die häufigste der k-nächsten Klassen
+            
+        return y_pred
 
-    data_train_folds = np.array_split(data_train, num_folds)
-    lbl_train_folds = np.array_split(lbl_train, num_folds)
-    k_to_accuracies = {}
-
-    for k in k_choices:
-        k_to_accuracies[k] = []
-        for num_knn in range(0, num_folds):
-            data_test = data_train_folds[num_knn]
-            lbl_test = lbl_train_folds[num_knn]
-            data_train = data_train_folds
-            lbl_train = lbl_train_folds
-
-            temp = np.delete(data_train, num_knn, 0)
-            data_train = np.concatenate((temp), axis=0)
-            lbl_train = np.delete(lbl_train, num_knn, 0)
-            lbl_train = np.concatenate((lbl_train), axis=0)
-
-            classifier = KNearestNeighbor()
-            classifier.train(data_train, lbl_train)
-            dists = classifier.compute_distances(data_test)
-            y_test_pred = classifier.predict_labels(dists, k)
-
-            num_correct = np.sum(y_test_pred == lbl_test)
-            accuracy = float(num_correct) / num_test
-            k_to_accuracies[k].append(accuracy)
-
-    print("Printing 5-fold accuracies for varying values of k:")
-    for k in sorted(k_to_accuracies):
-        for accuracy in k_to_accuracies[k]:
-            print(f'k = {k}, accuracy = {accuracy}')
-
-    plt.figure(figsize=(14, 4))
-    for k in k_choices:
-        accuracies = k_to_accuracies[k]
-        plt.scatter([k] * len(accuracies), accuracies)
-
-    # plot the trend line with error bars that correspond to standard deviation
-    accuracies_mean = np.array([np.mean(v) for k, v in sorted(k_to_accuracies.items())])
-    accuracies_std = np.array([np.std(v) for k, v in sorted(k_to_accuracies.items())])
-
-    plt.errorbar(k_choices, accuracies_mean, yerr=accuracies_std)
-    plt.title('Cross-validation on k')
-    plt.xlabel('k')
-    plt.xticks(np.arange(min(k_choices), max(k_choices), 2))
-    plt.ylabel('Cross-validation accuracy')
-    plt.grid(color = 'black', linestyle = '--', linewidth = 0.5)
-    plt.grid(True)
-    plt.show()
-
-def classifyKNN(data_train, lbl_train, data_test, lbl_test, set_k=3):
-    classifier = KNearestNeighbor()
-    classifier.train(data_train, lbl_train)
-    dists = classifier.compute_distances(data_test)
-    y_test_pred = classifier.predict_labels(dists, k=set_k)
-
-    num_correct = np.sum(y_test_pred == lbl_test)
-    accuracy = float(num_correct) / num_test
-    print('\nResults:')
-    print(f'Got {num_correct} / {num_test} correct => accuracy: {accuracy * 100}%')   
-
-
+def validate_prediction(prediction, labels_test):
+    accuracy = np.zeros(len(labels_test))
+    for i in range(0, len(labels_test)):
+        accuracy[i] = prediction[i] == labels_test[i] # Vergleich zwischen prediction und tatsächlichem label
+    return accuracy
 
 #---------------------------------------------------------------------------------
 # data
 #---------------------------------------------------------------------------------
 
 training = unpickle(R'sheet3\CIFAR\data_batch_1.bin')
-testing = unpickle(R'sheet3\CIFAR\test_batch.bin')
-validation = unpickle(R'sheet3\CIFAR\data_batch_2.bin')
+testing = unpickle(R'sheet3\CIFAR\data_batch_2.bin')
+validation = unpickle(R'sheet3\CIFAR\data_batch_3.bin')
 
 num_train = 2000
-num_test = 200
+num_test = 20
 num_validate = 10
 
-data_train = np.asarray(training[b'data'])[0:num_train]
+data_train = np.asarray(training[b'data'])[0:num_train, :]
+print(data_train.shape)
 labels_train = np.asarray(training[b'labels'])[0:num_train]
-data_test = np.asarray(testing[b'data'])[0:num_test]
+data_test = np.asarray(testing[b'data'])[0:num_test, :]
 labels_test = np.asarray(testing[b'labels'])[0:num_test]
-data_validate = np.asarray(validation[b'data'])[0:num_validate]
+data_validate = np.asarray(validation[b'data'])[0:num_validate, :]
 labels_validate = np.asarray(validation[b'labels'])[0:num_validate]
+
+'''data_train = np.reshape(data_train, (data_train.shape[0], -1))
+data_test = np.reshape(data_test, (data_test.shape[0], -1))
+data_validate = np.reshape(data_validate, (data_validate.shape[0], -1))'''
 
 # features----------------------------------------------------
 data_train_hue = rgb_to_hue(data_train)
@@ -273,8 +201,16 @@ features_validate = np.concatenate((data_validate_hue, data_validate_hog), axis=
 # main
 #---------------------------------------------------------------------------------
 
-classifyKNN(data_train_hue, labels_train, data_test_hue, labels_test, 3)
+# kNN ----------------------------------------------------------------------------
+distances = compute_distances(data_test, data_train)
+distances = np.array(distances)
+print(distances.shape)
 
+prediced_labels_from_test = predict_labels(distances, labels_train, k=3)
+print(prediced_labels_from_test)
+
+accuracy_k = np.mean(validate_prediction(prediced_labels_from_test, labels_test))
+print(accuracy_k)
 
 
 
