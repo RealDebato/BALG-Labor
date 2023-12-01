@@ -29,10 +29,15 @@ print(Hue.shape)
 Hue = np.where((Hue<0, Hue+256))
 Hue = np.asarray(Hue)
 Hue_split = np.split(Hue, num_img, axis=1)
+print(Hue_split)
+print(len(Hue_split))
 hist = []
 
 for img in range(0, num_img):
-    hist_row, _ = np.histogram(Hue_split, bins=256)
+    hist_row, _ = np.histogram(Hue_split[img], bins=256)
     hist = np.append(hist, hist_row)
 
 hist = np.reshape(hist, (num_img, 256))
+
+print(hist)
+print(hist.shape)

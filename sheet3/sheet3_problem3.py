@@ -121,7 +121,7 @@ def hist_hue(pixel_data):
     hist = []
 
     for img in range(0, num_img):
-        hist_row, _ = np.histogram(Hue_split, bins=256)
+        hist_row, _ = np.histogram(Hue_split[img], bins=256)
         hist = np.append(hist, hist_row)
 
     hist = np.reshape(hist, (num_img, 256))
