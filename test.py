@@ -24,20 +24,23 @@ Hue = np.zeros_like(max_color_channel)
 Hue[max_color_channel==0] = (rgb[..., 1]-rgb[..., 2])[max_color_channel==0]
 Hue[max_color_channel==1] = (rgb[..., 2]-rgb[..., 0])[max_color_channel==1]
 Hue[max_color_channel==2] = (rgb[..., 2]-rgb[..., 0])[max_color_channel==2]
-print(Hue.shape)
-
-Hue = np.where((Hue<0, Hue+256))
+print('Hue.shape', Hue.shape)
+print('Hue', Hue)
 Hue = np.asarray(Hue)
-Hue_split = np.split(Hue, num_img, axis=1)
-print(Hue_split)
-print(len(Hue_split))
+Hue = np.where(Hue<0, Hue+256, Hue)
+Hue = np.asarray(Hue)
+print('Hue.shape', Hue.shape)
+print('Hue', Hue)
+Hue_split = np.split(Hue, num_img, axis=0)
+print('Hue split', Hue_split)
+print('hue split len', len(Hue_split))
 hist = []
 
 for img in range(0, num_img):
-    hist_row, _ = np.histogram(Hue_split[img], bins=256)
+    hist_row, _ = np.histogram(Hue_split[img], bins=256, range=(0, 255), density=True)
     hist = np.append(hist, hist_row)
 
 hist = np.reshape(hist, (num_img, 256))
 
-print(hist)
-print(hist.shape)
+print('hist', hist)
+print('hist shape', hist.shape)
