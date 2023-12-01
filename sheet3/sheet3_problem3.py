@@ -102,18 +102,32 @@ def norm_img(data_train, data_test):
 
     return data_train_norm, data_test_norm
 
-def rgb_to_hue(pixel_data):
+def hist_hue(pixel_data):
     
     r, g, b = np.split(pixel_data, 3, axis=1)
     rgb = np.stack((r, g, b), axis=2)
     max_color_channel = np.argmax(rgb, axis=2) 
+    num_img = pixel_data.shape[0]
 
     Hue = np.zeros_like(max_color_channel)
     Hue[max_color_channel==0] = (rgb[..., 1]-rgb[..., 2])[max_color_channel==0]
     Hue[max_color_channel==1] = (rgb[..., 2]-rgb[..., 0])[max_color_channel==1]
     Hue[max_color_channel==2] = (rgb[..., 2]-rgb[..., 0])[max_color_channel==2]
+    print(Hue.shape)
 
-    return Hue
+    Hue = np.where((Hue<0, Hue+256))
+    Hue = np.asarray(Hue)
+    Hue_split = np.split(Hue, num_img, axis=1)
+    hist = []
+
+    for img in range(0, num_img):
+        hist_row, _ = np.histogram(Hue_split, bins=256)
+        hist = np.append(hist, hist_row)
+
+    hist = np.reshape(hist, (num_img, 256))
+    
+    return hist
+
 
 def classification_hog(pixel_data):
     
