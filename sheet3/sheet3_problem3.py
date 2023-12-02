@@ -147,15 +147,33 @@ def classification_hog(pixel_data):
     
     return hog_list
 
+def image_from_cifar10(data_vektor):
+   
+    img_flattend = np.split(data_vektor, 3)
+    red = img_flattend[0]
+    green = img_flattend[1] 
+    blue = img_flattend[2]
+
+    red = np.split(red, 32)
+    green = np.split(green, 32)
+    blue = np.split(blue, 32)
+    
+    img = np.dstack((red, green, blue))
+
+    return img.astype(np.uint8)
+
 def compute_distances(test_batch, training_batch):
     test_batch = np.asarray(test_batch)
     training_batch = np.asarray(training_batch)
     num_test = test_batch.shape[0]
+    print('num test', num_test)
     num_train = training_batch.shape[0]
+    print('num train', num_train)
     dists = np.zeros((num_test, num_train))
     dists = np.sum(np.square(training_batch), axis=1) + np.sum(np.square(test_batch), axis=1)[:, np.newaxis] - 2 * np.dot(test_batch, training_batch.T)
+    print('dists', dists)
+    print('dists.shape', dists.shape)
     # dist ist array mit dist zwischen (test, training)
-    print('Dist', dists)
     return dists
 
 def predict_labels(dists, labels_train, k=1):
@@ -163,13 +181,14 @@ def predict_labels(dists, labels_train, k=1):
         num_test = dists.shape[0]
         y_pred = np.zeros(num_test) 
         for i in range(num_test):   # für jedes Testbild werden die k-nächsten Klassen in y_pred ausgegeben
-            sorted_dist = np.argsort(dists[i])
-            print('Sorted Dist', sorted_dist)  # np.argpartition sollte schneller sein?
+            sorted_dist = np.argsort(dists[i])  # np.argpartition sollte schneller sein?
+            print('sorted dist.shape', sorted_dist.shape)
             closest_y = list(labels_train[sorted_dist[0:k]])
-            print('closest_y', closest_y)
+            print('sorted dist 0:k',sorted_dist[0:k])
+            print('Closest_y', closest_y)
             y_pred[i] = (np.argmax(np.bincount(closest_y))) #predicted class ist die häufigste der k-nächsten Klassen
-        
-        print(y_pred)
+            print('y_pred[i]', y_pred[i], i)
+
         return y_pred
 
 def validate_prediction(prediction, labels_test):
@@ -178,31 +197,21 @@ def validate_prediction(prediction, labels_test):
         accuracy[i] = prediction[i] == labels_test[i] # Vergleich zwischen prediction und tatsächlichem label
     return accuracy
 
-def classifyKNN(data_train, lbl_train, data_test, lbl_test, set_k=3):
-    classifier = KNearestNeighbor()
-    classifier.train(data_train, lbl_train)
-    dists = classifier.compute_distances(data_test)
-    y_test_pred = classifier.predict_labels(dists, k=set_k)
-
-    num_correct = np.sum(y_test_pred == lbl_test)
-    accuracy = float(num_correct) / num_test
-    print('\nResults:')
-    print(f'Got {num_correct} / {num_test} correct => accuracy: {accuracy * 100}%')
 
 #---------------------------------------------------------------------------------
 # data
 #---------------------------------------------------------------------------------
+label_decoder = unpickle(R'sheet3\CIFAR\batches.meta.txt')
 
 training = unpickle(R'sheet3\CIFAR\data_batch_1.bin')
 testing = unpickle(R'sheet3\CIFAR\data_batch_2.bin')
 validation = unpickle(R'sheet3\CIFAR\data_batch_3.bin')
 
-num_train = 100
-num_test = 10
+num_train = 750
+num_test = 250
 num_validate = 10
 
 data_train = np.asarray(training[b'data'])[0:num_train, :]
-print(data_train.shape)
 labels_train = np.asarray(training[b'labels'])[0:num_train]
 data_test = np.asarray(testing[b'data'])[0:num_test, :]
 labels_test = np.asarray(testing[b'labels'])[0:num_test]
@@ -211,7 +220,7 @@ labels_validate = np.asarray(validation[b'labels'])[0:num_validate]
 
 
 # features----------------------------------------------------
-data_train_hue = hist_hue(data_train)
+'''data_train_hue = hist_hue(data_train)
 data_test_hue = hist_hue(data_test)
 data_validate_hue = hist_hue(data_validate)
 
@@ -221,7 +230,7 @@ data_validate_hog = classification_hog(data_validate)
 
 features_train = np.concatenate((data_train_hue, data_train_hog), axis=1)
 features_test = np.concatenate((data_test_hue, data_test_hog), axis=1)
-features_validate = np.concatenate((data_validate_hue, data_validate_hog), axis=1)
+features_validate = np.concatenate((data_validate_hue, data_validate_hog), axis=1)'''
 
 
 #---------------------------------------------------------------------------------
@@ -229,22 +238,22 @@ features_validate = np.concatenate((data_validate_hue, data_validate_hog), axis=
 #---------------------------------------------------------------------------------
 
 # kNN ----------------------------------------------------------------------------
-print('Data Train', data_train)
-print('Labels Train', labels_train)
-print('Data Test', data_test)
-print('Labels Train', labels_test)
+print('Data Train Shape', data_train.shape)
+print('Labels Train Shape', labels_train.shape)
+print('Data Test Shape', data_test.shape)
+print('Labels Train Shape', labels_test.shape)
 
 distances = compute_distances(data_test, data_train)
 distances = np.array(distances)
-print(distances.shape)
+print('Distances', distances)
+print('Distances.shape', distances.shape)
 
-prediced_labels_from_test = predict_labels(distances, labels_train, k=3)
-print(prediced_labels_from_test)
+predict_labels_from_test = predict_labels(distances, labels_train, k=3)
+print('predicted_labels', predict_labels_from_test)
+print('predicted_labels.shape', predict_labels_from_test.shape)
 
-accuracy_k = np.mean(validate_prediction(prediced_labels_from_test, labels_test))
+accuracy_k = np.mean(validate_prediction(predict_labels_from_test, labels_test))
 print(accuracy_k)
-
-
 
 
 #---------------------------------------------------------------------------------

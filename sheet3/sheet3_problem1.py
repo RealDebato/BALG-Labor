@@ -41,7 +41,9 @@ def compute_distances(test_batch, training_batch):
     test_batch = np.asarray(test_batch)
     training_batch = np.asarray(training_batch)
     num_test = test_batch.shape[0]
+    print('num test', num_test)
     num_train = training_batch.shape[0]
+    print('num train', num_train)
     dists = np.zeros((num_test, num_train))
     dists = np.sum(np.square(training_batch), axis=1) + np.sum(np.square(test_batch), axis=1)[:, np.newaxis] - 2 * np.dot(test_batch, training_batch.T)
     # dist ist array mit dist zwischen (test, training)
@@ -53,7 +55,10 @@ def predict_labels(dists, labels_train, k=1):
         y_pred = np.zeros(num_test) 
         for i in range(num_test):   # für jedes Testbild werden die k-nächsten Klassen in y_pred ausgegeben
             sorted_dist = np.argsort(dists[i])  # np.argpartition sollte schneller sein?
+            print('sorted dist.shape', sorted_dist.shape)
             closest_y = list(labels_train[sorted_dist[0:k]])
+            print('sorted dist 0:k',sorted_dist[0:k])
+            print('Closest_y', closest_y)
             y_pred[i] = (np.argmax(np.bincount(closest_y))) #predicted class ist die häufigste der k-nächsten Klassen
             
         return y_pred
@@ -74,7 +79,7 @@ def validate_prediction(prediction, labels_test):
 #---------------------------------------------------------------------------------------------------
 # data
 
-data_reduction = 5000       # max. 10.000
+data_reduction = 20       # max. 10.000
 if data_reduction > 10000:
     data_reduction = 10000
 
@@ -82,14 +87,17 @@ if data_reduction > 10000:
 label_decoder = unpickle(R'sheet3\CIFAR\batches.meta.txt')             # Index = label nummer 
 #print(label_decoder[b'label_names'])
 
-data_batch_1 = unpickle(R'sheet3\CIFAR\data_batch_2.bin')
+data_batch_1 = unpickle(R'sheet3\CIFAR\data_batch_1.bin')
 
 pixel_data_batch_1 = np.asarray(data_batch_1[b'data'])
 pixel_data_batch_1 = pixel_data_batch_1[0:data_reduction, :]
-
+print('Pixel Data Batch 1 ',pixel_data_batch_1)
+print('Pixel Data Batch 1 shape ',pixel_data_batch_1.shape)
 
 labels_data_batch_1 = np.asarray(data_batch_1[b'labels'])
 labels_data_batch_1 = labels_data_batch_1[0:data_reduction]
+print('Labels Data Batch 1 ',labels_data_batch_1)
+print('Labels Data Batch 1 shape ',labels_data_batch_1.shape)
 
 # Einteilung in 4 Quartiele für 4-fold cross-validation
 split = 4
@@ -131,7 +139,7 @@ print(accuracy_k)
 #---------------------------------------------------------------------------------------------------
 # cross valitation
 
-num_folds = 5
+'''num_folds = 5
 k_choices = [1, 3, 5, 8, 10, 12, 15, 20, 50, 100]
 
 data_train_folds = []
@@ -183,7 +191,7 @@ plt.xticks(np.arange(min(k_choices), max(k_choices), 2))
 plt.ylabel('Cross-validation accuracy')
 plt.grid(color = 'black', linestyle = '--', linewidth = 0.5)
 plt.grid(True)
-plt.show()
+plt.show()'''
 
 
 
