@@ -201,8 +201,8 @@ def hist_hue(pixel_data):
 #---------------------------------------------------------------------------------------------------
 # data
 
-numbers_train = 5000
-numbers_test = 500
+numbers_train = 10000
+numbers_test = 2000
 numbers_validate = 100
 
 
@@ -282,7 +282,7 @@ distances = compute_distances(features_test, features_train)
 distances = np.array(distances)
 print(distances.shape)
 
-prediced_labels_from_test = predict_labels(distances, labels_data_training, k=3)
+prediced_labels_from_test = predict_labels(distances, labels_data_training, k=10)
 print(prediced_labels_from_test)
 
 accuracy_k = np.mean(validate_prediction(prediced_labels_from_test, labels_data_testing))
@@ -291,7 +291,7 @@ print(accuracy_k)
 #---------------------------------------------------------------------------------------------------
 # cross valitation
 
-num_folds = 5
+'''num_folds = 5
 k_choices = [1, 3, 5, 8, 10, 12, 15, 20]
 
 data_train_folds = []
@@ -343,12 +343,12 @@ plt.xticks(np.arange(min(k_choices), max(k_choices), 2))
 plt.ylabel('Cross-validation accuracy')
 plt.grid(color = 'black', linestyle = '--', linewidth = 0.5)
 plt.grid(True)
-plt.show()
+plt.show()'''
 
 # softmax ---------------------------------------------------------------------------------
 
 softmax = SoftmaxClassifier(features_train, labels_data_training, features_test, labels_data_testing)
-softmax.train(learning_rate=1e-1, reg=1e-6, num_iters=1000, batch_size=400)
+softmax.train(learning_rate=1e-2, reg=1e-6, num_iters=1000, batch_size=300)
 acc = softmax.check_accuracy()
 
 
