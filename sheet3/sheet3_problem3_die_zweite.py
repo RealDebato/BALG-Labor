@@ -43,7 +43,7 @@ class SoftmaxClassifier():
 
             # perform parameter update
             self.W += -learning_rate * grad     # W wird entlang des Gradienten verschoben
-            print(f'iteration {it} / {num_iters}: loss {loss}')
+            #print(f'iteration {it} / {num_iters}: loss {loss}')
 
         return loss_history
 
@@ -53,12 +53,12 @@ class SoftmaxClassifier():
 
         num_train = X_batch.shape[0]
         scores = X_batch.dot(self.W)    # s = W*x
-        scores -= np.max(scores, axis=1, keepdims=True) # der höchste score entspricht dem Ergebnis des classificators
-        exp_scores = np.exp(scores)     # softmax: Scores wird in Wahrscheinlichkeit (0,1) umgewandelt
-        probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
+        #scores -= np.max(scores, axis=1, keepdims=True) # der höchste score entspricht dem Ergebnis des classificators
+        exp_scores = np.exp(scores)   
+        probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)  # softmax: Scores wird in Wahrscheinlichkeit (0,1) umgewandelt
         correct_logprobs = -np.log(probs[range(num_train), y_batch])    # cross-entropy loss (115)
-        loss = np.sum(correct_logprobs) / num_train     # loss function (120)
-        loss += 0.5 * reg * np.sum(self.W * self.W)     #
+        loss = np.sum(correct_logprobs) / num_train     # gemittelter Loss über correct_logprobs
+        loss += 0.5 * reg * np.sum(self.W * self.W)     # loss function / squared error function
 
         # Differenz/Gradient der Gewichtungen W bestimmen
         dscores = probs     # Hierfür werden die Wahrscheinlichenkeiten verwendet
@@ -201,8 +201,8 @@ def hist_hue(pixel_data):
 #---------------------------------------------------------------------------------------------------
 # data
 
-numbers_train = 10000
-numbers_test = 2000
+numbers_train = 5000
+numbers_test = 1000
 numbers_validate = 100
 
 
@@ -242,6 +242,10 @@ pixel_data_training_normalized = np.subtract(pixel_data_training, mean_pixel_dat
 pixel_data_testing_normalized = np.subtract(pixel_data_testing, mean_pixel_data_training)
 pixel_data_validation_normalized = np.subtract(pixel_data_validation, mean_pixel_data_training)
 
+pixel_data_training_normalized = np.divide(pixel_data_training_normalized, 255.)
+pixel_data_testing_normalized = np.divide(pixel_data_testing_normalized, 255.)
+pixel_data_validation_normalized = np.divide(pixel_data_validation_normalized, 255)
+
 # new features ------------------------------------------------
 # hue
 hue_training = hist_hue(pixel_data_training)
@@ -253,6 +257,10 @@ mean_hue = np.mean(hue_training, axis=0)
 hue_training_normalized = np.subtract(hue_training, mean_hue)
 hue_testing_normalized = np.subtract(hue_testing, mean_hue)
 hue_validation_normalized = np.subtract(hue_validation, mean_hue)
+
+hue_training_normalized = np.divide(hue_training_normalized, 255.)
+hue_testing_normalized = np.divide(hue_testing_normalized, 255.)
+hue_validation_normalized = np.divide(hue_validation_normalized, 255)
 
 
 # hog
@@ -266,6 +274,18 @@ hog_training_normalized = np.subtract(hog_training, mean_hog)
 hog_testing_normalized = np.subtract(hog_testing, mean_hog)
 hog_validation_normalized = np.subtract(hog_validation, mean_hog)
 
+max_hog = np.amax(hog_training_normalized)
+min_hog = np.abs(np.amin(hog_training_normalized))
+if max_hog > min_hog:
+    scale = max_hog
+else:
+    scale = min_hog
+
+hog_training_normalized = np.divide(hog_training_normalized, scale)
+hog_testing_normalized = np.divide(hog_testing_normalized, scale)
+hog_validation_normalized = np.divide(hog_validation_normalized, scale)
+
+
 print('shape hue training', hue_training_normalized.shape)
 print('shape hog training', hog_training_normalized.shape)
 
@@ -278,7 +298,7 @@ features_validate = np.concatenate((hue_validation_normalized, hog_validation_no
 #--------------------------------------------------------------
 # Testing
 
-distances = compute_distances(features_test, features_train)
+'''distances = compute_distances(features_test, features_train)
 distances = np.array(distances)
 print(distances.shape)
 
@@ -286,7 +306,7 @@ prediced_labels_from_test = predict_labels(distances, labels_data_training, k=10
 print(prediced_labels_from_test)
 
 accuracy_k = np.mean(validate_prediction(prediced_labels_from_test, labels_data_testing))
-print(accuracy_k)
+print(accuracy_k)'''
 
 #---------------------------------------------------------------------------------------------------
 # cross valitation
@@ -347,11 +367,25 @@ plt.show()'''
 
 # softmax ---------------------------------------------------------------------------------
 
-softmax = SoftmaxClassifier(features_train, labels_data_training, features_test, labels_data_testing)
-softmax.train(learning_rate=1e-2, reg=1e-6, num_iters=1000, batch_size=300)
+# Pixel Data
+softmax = SoftmaxClassifier(pixel_data_training_normalized, labels_data_training, pixel_data_testing_normalized, labels_data_testing)
+softmax.train(learning_rate=1e-3, reg=1e-5, num_iters=1000, batch_size=300)
 acc = softmax.check_accuracy()
 
+# Hue
+softmax = SoftmaxClassifier(hue_training_normalized, labels_data_training, hue_testing_normalized, labels_data_testing)
+softmax.train(learning_rate=1e-3, reg=1e-5, num_iters=1000, batch_size=300)
+acc = softmax.check_accuracy()
 
+# HOG
+softmax = SoftmaxClassifier(hog_training_normalized, labels_data_training, hog_testing_normalized, labels_data_testing)
+softmax.train(learning_rate=1e-3, reg=1e-5, num_iters=1000, batch_size=300)
+acc = softmax.check_accuracy()
+
+# Hue + Hog
+softmax = SoftmaxClassifier(features_train, labels_data_training, features_test, labels_data_testing)
+softmax.train(learning_rate=1e-3, reg=1e-5, num_iters=1000, batch_size=300)
+acc = softmax.check_accuracy()
 
 # output
 

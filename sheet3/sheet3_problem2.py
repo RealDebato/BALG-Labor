@@ -22,7 +22,7 @@ class SoftmaxClassifier():
         num_train, dim = self.x_train.shape         # num_train = Anzahl Trainingsbilder, dim = 3072px
         num_classes = np.max(self.y_train) + 1      # Klassen 0...9, d. h. insg. 10 Klassen
         if self.W is None or reset_weights == True:
-            self.W = 0.001 * np.random.randn(dim, num_classes)  # zufällige Gewichtungen für alles Klassen erstellen
+            self.W = 0.0001 * np.random.randn(dim, num_classes)  # zufällige Gewichtungen für alles Klassen erstellen
 
         # Run stochastic gradient descent to optimize W
         loss_history = []
@@ -51,19 +51,19 @@ class SoftmaxClassifier():
 
         num_train = X_batch.shape[0]
         scores = X_batch.dot(self.W)    # s = W*x
-        scores -= np.max(scores, axis=1, keepdims=True) # der höchste score entspricht dem Ergebnis des classificators
-        exp_scores = np.exp(scores)     # softmax: Scores wird in Wahrscheinlichkeit (0,1) umgewandelt
+        #scores -= np.max(scores, axis=1, keepdims=True) # der größte score entspricht dem Ergebnis des classificators, hier größter score = 0
+        exp_scores = np.exp(scores)    # softmax: Scores wird in Wahrscheinlichkeit (0,1) umgewandelt
         probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
         correct_logprobs = -np.log(probs[range(num_train), y_batch])    # cross-entropy loss (115)
-        loss = np.sum(correct_logprobs) / num_train     # loss function (120)
-        loss += 0.5 * reg * np.sum(self.W * self.W)     #
+        loss = np.sum(correct_logprobs) / num_train     # gemittelter Loss über correct_logprobs
+        loss += 0.5 * reg * np.sum(self.W * self.W)     # loss function / squared error function
 
         # Differenz/Gradient der Gewichtungen W bestimmen
         dscores = probs     # Hierfür werden die Wahrscheinlichenkeiten verwendet
         dscores[range(num_train), y_batch] -= 1     # Differenz zum tatsächlichen score
         dscores /= num_train                        # mittlere Differenz
-        dW = np.dot(X_batch.T, dscores)             # s = W*x <=> W = x.T*s
-        dW += reg * self.W                          # dW = gradient wird leicht (um reg) verschoben, um loss zu verringern
+        dW = np.dot(X_batch.T, dscores)             # s = W*x <=> W = x.T*s, dW entspricht der Gewichtung für die Score-Differenz --> Richtung zu weniger Loss
+        
 
         return loss, dW
 
@@ -133,14 +133,16 @@ def validate_prediction(prediction, labels_test):
         accuracy[i] = prediction[i] == labels_test[i]
     return accuracy
 
-def norm_img(data_train, data_test):
+def norm_img(data_train, data_test, data_validate):
     mean_img = np.mean(data_train, axis=0)
     data_train_norm = data_train - mean_img
     data_test_norm = data_test - mean_img
+    data_validate_norm = data_validate - mean_img
     data_train_norm = np.divide(data_train_norm, 255.)
     data_test_norm = np.divide(data_test_norm, 255.)
+    data_validate_norm = np.divide(data_validate_norm, 255.)
 
-    return data_train_norm, data_test_norm
+    return data_train_norm, data_test_norm, data_validate_norm
 
 
 
@@ -160,14 +162,20 @@ if data_reduction > 10000:
 label_decoder = unpickle(R'sheet3\CIFAR\batches.meta.txt')             # Index = label nummer 
 #print(label_decoder[b'label_names'])
 
-data_batch_1 = unpickle(R'sheet3\CIFAR\data_batch_2.bin')
+data_batch_1 = unpickle(R'sheet3\CIFAR\data_batch_1.bin')
+data_batch_2 = unpickle(R'sheet3\CIFAR\data_batch_2.bin')
 
 pixel_data_batch_1 = np.asarray(data_batch_1[b'data'])
 pixel_data_batch_1 = pixel_data_batch_1[0:data_reduction, :]
 
-
 labels_data_batch_1 = np.asarray(data_batch_1[b'labels'])
 labels_data_batch_1 = labels_data_batch_1[0:data_reduction]
+
+pixel_data_batch_2 = np.asarray(data_batch_2[b'data'])[0:1000, :]
+labels_validate = np.asarray(data_batch_2[b'labels'])[0:1000]
+
+
+
 
 # Einteilung in 4 Quartiele für 4-fold cross-validation
 split = 4
@@ -189,7 +197,7 @@ labels_data_batch_1_75_100 = labels_data_batch_1[3*split_col:4*split_col]
 # Labels Training
 labels_data_batch_1_0_75 = labels_data_batch_1[0:3*split_col]
 
-data_train_norm, data_test_norm = norm_img(pixel_data_batch_1_0_75, pixel_data_batch_1_75_100)
+data_train_norm, data_test_norm, data_validate_norm = norm_img(pixel_data_batch_1_0_75, pixel_data_batch_1_75_100, pixel_data_batch_2)
 
 
 
@@ -202,10 +210,19 @@ data_train_norm, data_test_norm = norm_img(pixel_data_batch_1_0_75, pixel_data_b
 # softmax
 
 softmax = SoftmaxClassifier(data_train_norm, labels_data_batch_1_0_75, data_test_norm, labels_data_batch_1_75_100)
-softmax.train(learning_rate=1e-1, reg=1e-6, num_iters=1000, batch_size=400)
+softmax.train(learning_rate=1e-2, reg=1e-6, num_iters=3000, batch_size=500)
 acc = softmax.check_accuracy()
 
-#print(np.random.randn(data_train_norm.shape[1], 10))
+
+pred_labels = np.argmax(np.dot(data_validate_norm, softmax.W), axis=1)
+
+correct_pred = pred_labels == labels_validate
+correct_pred = np.asarray(correct_pred, dtype=int)
+
+acc_validation = np.sum(correct_pred)/len(correct_pred)
+
+print(f'Accuracy Validation: {acc_validation*100}%')
+
 
 # output
 
