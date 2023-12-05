@@ -173,12 +173,12 @@ def hist_hue(pixel_data):
     num_img = pixel_data.shape[0]
 
     Hue = np.zeros_like(max_color_channel)
-    Hue[max_color_channel==0] = (rgb[..., 1]-rgb[..., 2])[max_color_channel==0]
-    Hue[max_color_channel==1] = (rgb[..., 2]-rgb[..., 0])[max_color_channel==1]
-    Hue[max_color_channel==2] = (rgb[..., 2]-rgb[..., 0])[max_color_channel==2]
+    Hue[max_color_channel==0] = ((rgb[..., 1]-rgb[..., 2])[max_color_channel==0]) * 60 
+    Hue[max_color_channel==1] = (2 + (rgb[..., 2]-rgb[..., 0])[max_color_channel==1]) * 60
+    Hue[max_color_channel==2] = (4 + (rgb[..., 2]-rgb[..., 0])[max_color_channel==2]) * 60
 
     Hue = np.asarray(Hue)
-    Hue = np.where(Hue<0, Hue+256, Hue)
+    Hue = np.where(Hue<0, Hue+360, Hue)
     Hue = np.asarray(Hue)
 
     Hue_split = np.split(Hue, num_img, axis=0)
@@ -186,10 +186,10 @@ def hist_hue(pixel_data):
     hist = []
 
     for img in range(0, num_img):
-        hist_row, _ = np.histogram(Hue_split[img], bins=256, range=(0, 255), density=True)
+        hist_row, _ = np.histogram(Hue_split[img], bins=360, range=(0, 359), density=True)
         hist = np.append(hist, hist_row)
 
-    hist = np.reshape(hist, (num_img, 256))
+    hist = np.reshape(hist, (num_img, 360))
     
     return hist
     
@@ -262,7 +262,6 @@ hue_training_normalized = np.divide(hue_training_normalized, 255.)
 hue_testing_normalized = np.divide(hue_testing_normalized, 255.)
 hue_validation_normalized = np.divide(hue_validation_normalized, 255)
 
-
 # hog
 hog_training = classification_hog(pixel_data_training)
 hog_testing = classification_hog(pixel_data_testing)
@@ -298,15 +297,15 @@ features_validate = np.concatenate((hue_validation_normalized, hog_validation_no
 #--------------------------------------------------------------
 # Testing
 
-'''distances = compute_distances(features_test, features_train)
+distances = compute_distances(features_test, features_train)
 distances = np.array(distances)
-print(distances.shape)
+#print(distances.shape)
 
 prediced_labels_from_test = predict_labels(distances, labels_data_training, k=10)
-print(prediced_labels_from_test)
+#print(prediced_labels_from_test)
 
 accuracy_k = np.mean(validate_prediction(prediced_labels_from_test, labels_data_testing))
-print(accuracy_k)'''
+print(accuracy_k)
 
 #---------------------------------------------------------------------------------------------------
 # cross valitation
@@ -372,19 +371,10 @@ softmax = SoftmaxClassifier(pixel_data_training_normalized, labels_data_training
 softmax.train(learning_rate=1e-3, reg=1e-5, num_iters=1000, batch_size=300)
 acc = softmax.check_accuracy()
 
-# Hue
-softmax = SoftmaxClassifier(hue_training_normalized, labels_data_training, hue_testing_normalized, labels_data_testing)
-softmax.train(learning_rate=1e-3, reg=1e-5, num_iters=1000, batch_size=300)
-acc = softmax.check_accuracy()
-
-# HOG
-softmax = SoftmaxClassifier(hog_training_normalized, labels_data_training, hog_testing_normalized, labels_data_testing)
-softmax.train(learning_rate=1e-3, reg=1e-5, num_iters=1000, batch_size=300)
-acc = softmax.check_accuracy()
 
 # Hue + Hog
 softmax = SoftmaxClassifier(features_train, labels_data_training, features_test, labels_data_testing)
-softmax.train(learning_rate=1e-3, reg=1e-5, num_iters=1000, batch_size=300)
+softmax.train(learning_rate=1e-1, reg=1e-5, num_iters=1000, batch_size=300)
 acc = softmax.check_accuracy()
 
 # output
