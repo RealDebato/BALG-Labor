@@ -56,7 +56,7 @@ class SoftmaxClassifier():
         probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
         correct_logprobs = -np.log(probs[range(num_train), y_batch])    # cross-entropy loss (115)
         loss = np.sum(correct_logprobs) / num_train     # gemittelter Loss über correct_logprobs
-        loss += 0.5 * reg * np.sum(self.W * self.W)     # loss function / squared error function
+        #loss += 0.5 * reg * np.sum(self.W * self.W)     # loss function / squared error function
 
         # Differenz/Gradient der Gewichtungen W bestimmen
         dscores = probs     # Hierfür werden die Wahrscheinlichenkeiten verwendet
@@ -210,7 +210,7 @@ data_train_norm, data_test_norm, data_validate_norm = norm_img(pixel_data_batch_
 # softmax
 
 softmax = SoftmaxClassifier(data_train_norm, labels_data_batch_1_0_75, data_test_norm, labels_data_batch_1_75_100)
-softmax.train(learning_rate=1e-2, reg=1e-6, num_iters=3000, batch_size=500)
+softmax.train(learning_rate=1e-2, reg=1e-6, num_iters=2000, batch_size=500)
 acc = softmax.check_accuracy()
 
 

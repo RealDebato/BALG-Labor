@@ -178,7 +178,8 @@ def hist_hue(pixel_data):
     Hue[max_color_channel==2] = (4 + (rgb[..., 2]-rgb[..., 0])[max_color_channel==2]) * 60
 
     Hue = np.asarray(Hue)
-    Hue = np.where(Hue<0, Hue+360, Hue)
+    #Hue = np.where(Hue<0, Hue+360, Hue)
+    Hue[Hue<0] = Hue[Hue<0] + 360
     Hue = np.asarray(Hue)
 
     Hue_split = np.split(Hue, num_img, axis=0)
@@ -305,6 +306,7 @@ prediced_labels_from_test = predict_labels(distances, labels_data_training, k=10
 #print(prediced_labels_from_test)
 
 accuracy_k = np.mean(validate_prediction(prediced_labels_from_test, labels_data_testing))
+print('Accuracy kNN:')
 print(accuracy_k)
 
 #---------------------------------------------------------------------------------------------------
@@ -369,12 +371,14 @@ plt.show()'''
 # Pixel Data
 softmax = SoftmaxClassifier(pixel_data_training_normalized, labels_data_training, pixel_data_testing_normalized, labels_data_testing)
 softmax.train(learning_rate=1e-3, reg=1e-5, num_iters=1000, batch_size=300)
+print('Accuracy Softmax pixel:')
 acc = softmax.check_accuracy()
 
 
 # Hue + Hog
 softmax = SoftmaxClassifier(features_train, labels_data_training, features_test, labels_data_testing)
 softmax.train(learning_rate=1e-1, reg=1e-5, num_iters=1000, batch_size=300)
+print('Accuracy Softmax Hue + HOG:')
 acc = softmax.check_accuracy()
 
 # output
