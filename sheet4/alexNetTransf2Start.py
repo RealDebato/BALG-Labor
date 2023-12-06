@@ -2,7 +2,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 import torch.nn as nn
-import torch.optim as optim
+import torch.optim as optimizer
 from torchvision import models
 
 import matplotlib.pyplot as plt
