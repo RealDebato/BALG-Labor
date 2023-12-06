@@ -18,18 +18,18 @@ import torchvision
 # classes
 #---------------------------------------------------------------------------------------------------
   
-class TwoLayerPerceptron():
-    def __init__(self, num_features, num_labels):
-        self.num_features = num_features
-        self.num_labels = num_labels
+class TwoLayerPerceptron(nn.Module):
+    def __init__(self, num_features, num_hidden, num_labels):
         self.layers = nn.Sequential(
-            nn.Linear(self.num_features, 100),
+            nn.Flatten(),
+            nn.Linear(num_features, num_hidden),
             nn.ReLU(),
-            nn.Linear(100, num_labels)
+            nn.Linear(num_hidden, num_labels))
         pass
 
     def forward(self, x_train):
-        return self.layers(x_train)
+        scores = self.layers(x_train)
+        return scores
     
 #---------------------------------------------------------------------------------------------------
 # functions
@@ -98,6 +98,27 @@ def image_from_cifar10(data_vektor):
 
     return img.astype(np.uint8)
 
+
+
+
+
+#---------------------------------------------------------------------------------------------------
+# cuda
+#---------------------------------------------------------------------------------------------------
+
+USE_GPU = True
+
+dtype = torch.float32 # we will be using float throughout this tutorial
+
+if USE_GPU and torch.cuda.is_available():
+    device = torch.device('cuda')
+else:
+    device = torch.device('cpu')
+
+# Constant to control how frequently we print train loss
+print_every = 100
+
+print('using device:', device)
 
 
 #---------------------------------------------------------------------------------------------------
@@ -260,11 +281,21 @@ np.save(R'sheet4\data\features_data_validation.npy', features_validate)'''
 
 if __name__ == '__main__':
     torch.manual_seed(0)
-
+hidden_layers = 1000
 trainloader = DataLoader(features_train, batch_size=200, shuffle=True, num_workers=1)
-tlp = TwoLayerPerceptron()
+tlp = TwoLayerPerceptron(features_train.shape[1], hidden_layers, num_labels=10)
 f_loss = nn.CrossEntropyLoss()
+gradient_descent = torch.optim.SGD(tlp.parameters(), lr=1e-4)
 
+
+for epoch in range(0,5):
+    print(f'Start Epoch {epoch+1}')
+    current_loss = 0.0
+    for i, feature_vec in enumerate(trainloader, 0):   
+        torch.optim.optimizer.zero_grad()
+        pred_y = tlp(feature_vec)
+        loss = f_loss(pred_y, labels_data_training)
+        
 
 print('Ende')
 
