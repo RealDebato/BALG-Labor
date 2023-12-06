@@ -8,7 +8,9 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import skimage as ski
 import time
-import torch
+import torch 
+from torch import nn
+from torch.utils.data import DataLoader
 import torchvision
 
 
@@ -16,8 +18,19 @@ import torchvision
 # classes
 #---------------------------------------------------------------------------------------------------
   
+class TwoLayerPerceptron():
+    def __init__(self, num_features, num_labels):
+        self.num_features = num_features
+        self.num_labels = num_labels
+        self.layers = nn.Sequential(
+            nn.Linear(self.num_features, 100),
+            nn.ReLU(),
+            nn.Linear(100, num_labels)
+        pass
 
-
+    def forward(self, x_train):
+        return self.layers(x_train)
+    
 #---------------------------------------------------------------------------------------------------
 # functions
 #---------------------------------------------------------------------------------------------------
@@ -116,6 +129,8 @@ try:
 
 except:
     pass'''
+
+
 #---------------------------------------------------------------------------------------------------
 # pre-processing data
 #---------------------------------------------------------------------------------------------------
@@ -238,6 +253,17 @@ np.save(R'sheet4\data\features_data_train.npy', features_train)
 np.save(R'sheet4\data\features_data_test.npy', features_test)
 np.save(R'sheet4\data\features_data_validation.npy', features_validate)'''
 
+
+#---------------------------------------------------------------------------------------------------
+# main
+#---------------------------------------------------------------------------------------------------
+
+if __name__ == '__main__':
+    torch.manual_seed(0)
+
+trainloader = DataLoader(features_train, batch_size=200, shuffle=True, num_workers=1)
+tlp = TwoLayerPerceptron()
+f_loss = nn.CrossEntropyLoss()
 
 
 print('Ende')
