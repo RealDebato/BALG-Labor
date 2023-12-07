@@ -12,25 +12,47 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 import torchvision
-
+import tensorflow as tf
+os.environ['AUTOGRAPH_VERBOSITY'] = '3'
+tf.autograph.set_verbosity(3)
 
 #---------------------------------------------------------------------------------------------------
 # classes
 #---------------------------------------------------------------------------------------------------
   
-class TwoLayerPerceptron(nn.Module):
-    def __init__(self, num_features, num_hidden, num_labels):
+class MultiLayerPerceptron(nn.Module):
+    def __init__(self, num_features, num_labels):
+        super().__init__()
         self.layers = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(num_features, num_hidden),
+            nn.Linear(num_features, int(num_features/10)),
             nn.ReLU(),
-            nn.Linear(num_hidden, num_labels))
+            nn.Linear(int(num_features/10), int(num_features/20)),
+            nn.ReLU(),
+            nn.Linear(int(num_features/20), int(num_features/25)),
+            nn.ReLU(),
+            nn.Linear(int(num_features/25), num_labels),
+            nn.Softmax())
+                
         pass
 
     def forward(self, x_train):
         scores = self.layers(x_train)
         return scores
+
+class TwoLayerFC(nn.Module):
+    def __init__(self, input_size, hidden_size, num_classes):
+        super().__init__()
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        nn.init.kaiming_normal_(self.fc1.weight)
+        self.fc2 = nn.Linear(hidden_size, num_classes)
+        nn.init.kaiming_normal_(self.fc2.weight)
     
+    def forward(self, x):
+        x = flatten(x)
+        scores = self.fc2(nn.ReLU(self.fc1(x)))
+        return scores
+
 #---------------------------------------------------------------------------------------------------
 # functions
 #---------------------------------------------------------------------------------------------------
@@ -98,9 +120,49 @@ def image_from_cifar10(data_vektor):
 
     return img.astype(np.uint8)
 
+def flatten(x):
+    N = x.shape[0] # read in N, C, H, W
+    return x.view(N, -1)
 
+def check_accuracy(loader, model):
 
+    num_correct = 0
+    num_samples = 0
+    model.eval()  # set model to evaluation mode
+    with torch.no_grad():
+        for inputs, target in loader:
+            inputs = inputs.to(device=device, dtype=dtype)  # move to device, e.g. GPU
+            target = target.to(device=device, dtype=torch.long)
+            scores = model(inputs)
+            _, preds = scores.max(1)
+            num_correct += (preds == y).sum()
+            num_samples += preds.size(0)
+        acc = float(num_correct) / num_samples
+        print(f'Got {num_correct} / {num_samples} correct ({100*acc})')
 
+def train(model, optimizer, val_loader, test_loader, epoch=5):
+
+    model = model.to(device=device)
+    for e in range(0,epoch):
+        print(f'Start Epoch {e+1}')
+        
+        for i, (inputs, targets) in enumerate(trainloader, 0):
+            model.train()   
+            inputs = inputs.to(device=device, dtype=torch.float32)
+            targets = targets.to(device=device, dtype=torch.long)
+            scores = model(inputs)
+            optimizer.zero_grad()
+            pred_labels = model(inputs)
+            loss = torch.nn.functional.cross_entropy(pred_labels, targets)
+            loss.backward()
+            optimizer.step()
+            
+            if i % 10 == 0:
+                print(f'Epoch {e+1}: loss after batch no. {i} ==> {loss.item()}')
+                check_accuracy(val_loader, model)
+            
+        check_accuracy(test_loader, model)
+    print('Training Ende')
 
 #---------------------------------------------------------------------------------------------------
 # cuda
@@ -108,48 +170,14 @@ def image_from_cifar10(data_vektor):
 
 USE_GPU = True
 
-dtype = torch.float32 # we will be using float throughout this tutorial
+dtype = torch.float32 
 
 if USE_GPU and torch.cuda.is_available():
     device = torch.device('cuda')
 else:
     device = torch.device('cpu')
 
-# Constant to control how frequently we print train loss
-print_every = 100
-
-print('using device:', device)
-
-
-#---------------------------------------------------------------------------------------------------
-# file structure
-#---------------------------------------------------------------------------------------------------
-'''try:    
-    shutil.rmtree(R'sheet4\data')
-except:
-    pass
-
-try:
-    os.makedirs(R'sheet4\data')
-
-    open(R'sheet4\data\pixel_data_train.npy', 'x')
-    open(R'sheet4\data\pixel_data_test.npy', 'x')
-    open(R'sheet4\data\pixel_data_validation.npy', 'x')
-
-    open(R'sheet4\data\hue_data_train.npy', 'x')
-    open(R'sheet4\data\hue_data_test.npy', 'x')
-    open(R'sheet4\data\hue_data_validation.npy', 'x')
-
-    open(R'sheet4\data\hog_data_train.npy', 'x')
-    open(R'sheet4\data\hog_data_test.npy', 'x')
-    open(R'sheet4\data\hog_data_validation.npy', 'x')
-
-    open(R'sheet4\data\features_data_train.npy', 'x')
-    open(R'sheet4\data\features_data_test.npy', 'x')
-    open(R'sheet4\data\features_data_validation.npy', 'x')
-
-except:
-    pass'''
+#print('using device:', device)
 
 
 #---------------------------------------------------------------------------------------------------
@@ -159,8 +187,6 @@ except:
 numbers_train = 5000
 numbers_validate = 1000
 numbers_test = 500
-
-
 
 label_decoder = unpickle(R'sheet3\CIFAR\batches.meta.txt')             # Index = label nummer 
 #print(label_decoder[b'label_names'])
@@ -199,6 +225,10 @@ labels_data = np.concatenate((labels_data_batch_1, labels_data_batch_2, labels_d
 labels_data_training = labels_data_batch_1[0:numbers_train]
 labels_data_testing = labels_data_batch_2[0:numbers_test]
 labels_data_validation = labels_data_batch_3[numbers_train+1:-1]
+
+labels_data_training = np.asarray(labels_data_training, dtype=np.int64)
+labels_data_testing = np.asarray(labels_data_testing, dtype=np.int64)
+labels_data_validation = np.asarray(labels_data_validation, dtype=np.int64)
 
 mean_pixel_data_training = np.mean(pixel_data_training, axis=0)
 
@@ -248,11 +278,8 @@ hog_testing_normalized = np.subtract(hog_testing, mean_hog)
 hog_validation_normalized = np.subtract(hog_validation, mean_hog)
 
 max_hog = np.amax(hog_training_normalized)
-min_hog = np.abs(np.amin(hog_training_normalized))
-if max_hog > min_hog:
-    scale = max_hog
-else:
-    scale = min_hog
+min_hog = np.amin(hog_training_normalized)
+scale = max_hog-min_hog
 
 hog_training_normalized = np.divide(hog_training_normalized, scale)
 hog_testing_normalized = np.divide(hog_testing_normalized, scale)
@@ -265,14 +292,41 @@ np.save(R'sheet4\data\hog_data_validation.npy', hog_validation_normalized)'''
 
 
 # concatenat features
-features_train = np.concatenate((hue_training_normalized, hog_training_normalized), axis=1)
-features_test = np.concatenate((hue_testing_normalized, hog_testing_normalized), axis=1)
-features_validate = np.concatenate((hue_validation_normalized, hog_validation_normalized), axis=1)
+features_train = np.concatenate((hue_training_normalized, hog_training_normalized), axis=1, dtype=np.float32)
+features_test = np.concatenate((hue_testing_normalized, hog_testing_normalized), axis=1, dtype=np.float32)
+features_validate = np.concatenate((hue_validation_normalized, hog_validation_normalized), axis=1, dtype=np.float32)
 
 '''print('Start writing features')
 np.save(R'sheet4\data\features_data_train.npy', features_train)
 np.save(R'sheet4\data\features_data_test.npy', features_test)
 np.save(R'sheet4\data\features_data_validation.npy', features_validate)'''
+
+'''t_features_train = tf.convert_to_tensor(features_train)
+t_features_test = tf.convert_to_tensor(features_test)
+t_features_validate = tf.convert_to_tensor(features_validate)'''
+
+training = []
+
+for i in range(features_train.shape[0]):
+   training.append([features_train[i,:], labels_data_training[i]])
+#training = np.asarray(training, dtype=np.float32)
+#print(f'Training Shape: {training.tf.shape}, dtype: {training.dtype}')
+
+validation = []
+for i in range(features_validate.shape[0]):
+   validation.append([features_validate[i,:], labels_data_validation[i]])
+#validation = np.asarray(validation, dtype=np.float32)
+#print(f'Validation Shape: {validation.tf.shape}, dtype: {validation.dtype}')
+
+testing = []
+for i in range(features_test.shape[0]):
+   testing.append([features_test[i,:], labels_data_testing[i]])
+#testing = np.asarray(testing, dtype=np.float32)
+#print(f'Validation Shape: {testing.tf.shape}, dtype: {testing.dtype}')
+
+
+
+
 
 
 #---------------------------------------------------------------------------------------------------
@@ -280,22 +334,29 @@ np.save(R'sheet4\data\features_data_validation.npy', features_validate)'''
 #---------------------------------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    torch.manual_seed(0)
-hidden_layers = 1000
-trainloader = DataLoader(features_train, batch_size=200, shuffle=True, num_workers=1)
-tlp = TwoLayerPerceptron(features_train.shape[1], hidden_layers, num_labels=10)
-f_loss = nn.CrossEntropyLoss()
-gradient_descent = torch.optim.SGD(tlp.parameters(), lr=1e-4)
+    #torch.manual_seed(0)
+    torch.multiprocessing.freeze_support()
+
+    trainloader = DataLoader(training, batch_size=64, shuffle=True, num_workers=1)
+    validationloader = DataLoader(validation, batch_size=64, shuffle=True, num_workers=1)
+    testloader = DataLoader(testing, batch_size=64, shuffle=True, num_workers=1)
+
+    mlp = MultiLayerPerceptron(features_train.shape[1], num_labels=10)
+    twoLayer = TwoLayerFC(features_train.shape[1], 30, 10)
+
+    gradient_descent = torch.optim.SGD(mlp.parameters(), lr=1e-3)
 
 
-for epoch in range(0,5):
-    print(f'Start Epoch {epoch+1}')
-    current_loss = 0.0
-    for i, feature_vec in enumerate(trainloader, 0):   
-        torch.optim.optimizer.zero_grad()
-        pred_y = tlp(feature_vec)
-        loss = f_loss(pred_y, labels_data_training)
-        
+    #train(mlp, gradient_descent, validationloader, testloader, epoch=5)
+    train(twoLayer, gradient_descent, validationloader, testloader, epoch=5)
+    
 
-print('Ende')
+
+
+
+
+
+
+
+#print('Ende')
 
