@@ -172,10 +172,7 @@ class TwoLayerFC(nn.Module):
         return scores
     
 def check_accuracy(loader, model):
-    if loader.dataset.train:
-        print('Checking accuracy on validation set')
-    else:
-        print('Checking accuracy on test set')   
+  
     num_correct = 0
     num_samples = 0
     model.eval()  # set model to evaluation mode
@@ -231,10 +228,11 @@ def train(model, optimizer, epochs=5):
 if __name__ == '__main__':
     #torch.manual_seed(0)
     torch.multiprocessing.freeze_support()
-    
+
     pixel_data_train, labels_data_train, pixel_data_val, labels_data_val, pixel_data_test, labels_data_test = unpickle_cifar(10000, 1000, 2000)
 
     pixel_data_train = np.concatenate((normalize_std(hist_hue(pixel_data_train)), normalize_std(classification_hog(pixel_data_train))), axis=1)
+    print(pixel_data_train.shape)
     pixel_data_val = np.concatenate((normalize_std(hist_hue(pixel_data_val)), normalize_std(classification_hog(pixel_data_val))), axis=1)
     pixel_data_test = np.concatenate((normalize_std(hist_hue(pixel_data_test)), normalize_std(classification_hog(pixel_data_test))), axis=1)
 
@@ -250,7 +248,7 @@ if __name__ == '__main__':
 
     hidden_layer_size = 100
     learning_rate = 1e-2
-    model = TwoLayerFC(3 * 32 * 32, hidden_layer_size, 10)
+    model = TwoLayerFC(340, hidden_layer_size, 10)
     optimizer = optim.SGD(model.parameters(), lr=learning_rate)
 
     train(model, optimizer, epochs = 20)
