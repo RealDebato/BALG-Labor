@@ -11,6 +11,13 @@ import torchvision.transforms as T
 import torch.nn.functional as F  # useful stateless functions
 
 import numpy as np
+import math
+import scipy
+import cv2
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import skimage as ski
+import time
 
 
 #--------------------------------------------------------------------------------------
@@ -40,12 +47,12 @@ def classification_hog(pixel_data):
     orientations = 10
     num_images = pixel_data.shape[0]
     len_hog = int(orientations * 1024/(pixels_per_cell[0]*pixels_per_cell[1]))
-    pixel_data = pixel_data.reshape(num_images, 3, 32, 32).transpose(0,2,3,1).astype("float")
+    pixel_data_hog = pixel_data.reshape(num_images, 3, 32, 32).transpose(0,2,3,1).astype("float")
     hog_list = []
     for img in range(0, num_images):
-        hog_feats = ski.feature.hog(pixel_data[img, :], orientations=orientations, pixels_per_cell=pixels_per_cell, cells_per_block=cells_per_block, block_norm='L1', visualize=False, feature_vector=True, channel_axis=2)
+        hog_feats = ski.feature.hog(pixel_data_hog[img, :], orientations=orientations, pixels_per_cell=pixels_per_cell, cells_per_block=cells_per_block, block_norm='L1', visualize=False, feature_vector=True, channel_axis=2)
         hog_list = np.append(hog_list, hog_feats)
-    
+
     hog_list = np.reshape(hog_list, (num_images, len_hog))
     
     return hog_list
@@ -99,7 +106,7 @@ def unpickle_cifar(num_train, num_test, num_val):
     labels_data_train = labels_data[0:num_train]
 
     pixel_data_val = pixel_data[50001-num_val:-1,:]
-    labels_data_val = labels_data[50001-num_val+1:-1]
+    labels_data_val = labels_data[50001-num_val:-1]
 
     return pixel_data_train, labels_data_train, pixel_data_val, labels_data_val, pixel_data_test, labels_data_test
 
@@ -109,19 +116,24 @@ def prepare_for_loader(inputs, targets):
         loader_data.append([inputs[i,:], targets[i]])
     return loader_data
 
-def features_Hue_Hog(data_cifar):
-    
+def normalize_std(data):
+    data = np.asarray(data, dtype=np.float64)
+    mean = np.mean(data, dtype=np.float64)
+    data -= mean
 
+    max_hist = np.max(data)
+    min_hist = np.min(data)
+    std = np.std(data)
 
+    '''if max_hist > np.abs(min_hist):
+        scale = max_hist
+    else:
+        scale = np.abs(min_hist)'''
 
-    return training, val, testing
+    data_norm = data/std
 
+    return data_norm
 
-
-
-loader_train
-loader_val
-loader_test
 
 
 #--------------------------------------------------------------------------------------
@@ -185,7 +197,7 @@ def train(model, optimizer, epochs=5):
     """
     model = model.to(device=device)  # move the model parameters to CPU/GPU
     for e in range(epochs):
-        for t, (x, y) in enumerate(loader_train):
+        for t, (x, y) in enumerate(trainloader):
             model.train()  # put model to training mode
             x = x.to(device=device, dtype=dtype)  # move to device, e.g. GPU
             y = y.to(device=device, dtype=torch.long)
@@ -207,21 +219,41 @@ def train(model, optimizer, epochs=5):
 
             if t % 200 == 0:
                 print('Epoch %d, Iteration %d, loss = %.4f' % (e,t, loss.item()))
-                check_accuracy(loader_val, model)
+                check_accuracy(validationloader, model)
                 print()
-        check_accuracy(loader_test,model)
+        check_accuracy(testloader,model)
         print()
 
 
 
 #----------------------------------------------------------------------------------------------
 
-hidden_layer_size = 4000
-learning_rate = 1e-2
-model = TwoLayerFC(3 * 32 * 32, hidden_layer_size, 10)
-optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+if __name__ == '__main__':
+    #torch.manual_seed(0)
+    torch.multiprocessing.freeze_support()
+    
+    pixel_data_train, labels_data_train, pixel_data_val, labels_data_val, pixel_data_test, labels_data_test = unpickle_cifar(10000, 1000, 2000)
 
-train(model, optimizer, epochs = 20)
+    pixel_data_train = np.concatenate((normalize_std(hist_hue(pixel_data_train)), normalize_std(classification_hog(pixel_data_train))), axis=1)
+    pixel_data_val = np.concatenate((normalize_std(hist_hue(pixel_data_val)), normalize_std(classification_hog(pixel_data_val))), axis=1)
+    pixel_data_test = np.concatenate((normalize_std(hist_hue(pixel_data_test)), normalize_std(classification_hog(pixel_data_test))), axis=1)
+
+    data_load_train = prepare_for_loader(pixel_data_train, labels_data_train)
+    data_load_val = prepare_for_loader(pixel_data_val, labels_data_val)
+    data_load_test = prepare_for_loader(pixel_data_test, labels_data_test)
+
+    batch_size = 64
+
+    trainloader = DataLoader(data_load_train, batch_size=batch_size, shuffle=True, num_workers=1)
+    validationloader = DataLoader(data_load_val, batch_size=batch_size, shuffle=True, num_workers=1)
+    testloader = DataLoader(data_load_test, batch_size=batch_size, shuffle=True, num_workers=1)
+
+    hidden_layer_size = 100
+    learning_rate = 1e-2
+    model = TwoLayerFC(3 * 32 * 32, hidden_layer_size, 10)
+    optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+
+    train(model, optimizer, epochs = 20)
 
 
 

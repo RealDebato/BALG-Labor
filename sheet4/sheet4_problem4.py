@@ -135,7 +135,7 @@ def check_accuracy(loader, model):
             target = target.to(device=device, dtype=torch.long)
             scores = model(inputs)
             _, preds = scores.max(1)
-            num_correct += (preds == y).sum()
+            num_correct += (preds == target).sum()
             num_samples += preds.size(0)
         acc = float(num_correct) / num_samples
         print(f'Got {num_correct} / {num_samples} correct ({100*acc})')
