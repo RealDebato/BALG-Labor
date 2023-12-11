@@ -312,7 +312,7 @@ print(accuracy_k)
 #---------------------------------------------------------------------------------------------------
 # cross valitation
 
-'''num_folds = 5
+num_folds = 5
 k_choices = [1, 3, 5, 8, 10, 12, 15, 20]
 
 data_train_folds = []
@@ -364,7 +364,7 @@ plt.xticks(np.arange(min(k_choices), max(k_choices), 2))
 plt.ylabel('Cross-validation accuracy')
 plt.grid(color = 'black', linestyle = '--', linewidth = 0.5)
 plt.grid(True)
-plt.show()'''
+plt.show()
 
 # softmax ---------------------------------------------------------------------------------
 

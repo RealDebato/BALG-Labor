@@ -7,7 +7,7 @@ from torch.utils.data import sampler
 import torchvision.datasets as dset
 import torchvision.transforms as T
 
-import torch.nn.functional as F  # useful stateless functions
+import torch.nn.functional as F 
 
 import numpy as np
 import math
