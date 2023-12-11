@@ -1,5 +1,4 @@
 import torch
-#assert '.'.join(torch.__version__.split('.')[:2]) == '1.4'
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
