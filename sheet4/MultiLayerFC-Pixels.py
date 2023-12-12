@@ -167,7 +167,7 @@ else:
 #--------------------------------------------------------------------------------------
 
 def flatten(x):
-    N = x.shape[0] # read in N, C, H, W
+    N = x.shape[0] 
     return x.view(N, -1)
 
 def init(net):
@@ -218,7 +218,7 @@ def check_accuracy(loader, model):
 def train(model, optimizer, epochs=5, lr=1e-4):
     model = model.to(device=device)
     for e in range(epochs):
-        
+        optimizer = optim.SGD(model.parameters(), lr=learning_rate)
         for t, (x, y) in enumerate(trainloader):
             model.train()  
             x = x.to(device=device, dtype=torch.float32)  
@@ -279,7 +279,7 @@ if __name__ == '__main__':
     
     fig, ax1 = plt.subplots()
 
-    fig.suptitle('2 Layer - ReLU - lr = 1e-2 (Pixels)')
+    fig.suptitle('4 Layer - LogSoftmax - lr = 1e-4 (Pixels)')
 
     color = 'tab:blue'
     ax1.set_ylabel('acc', color=color)

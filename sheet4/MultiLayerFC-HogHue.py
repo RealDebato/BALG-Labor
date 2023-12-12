@@ -7,7 +7,7 @@ from torch.utils.data import sampler
 import torchvision.datasets as dset
 import torchvision.transforms as T
 
-import torch.nn.functional as F  # useful stateless functions
+import torch.nn.functional as F  
 
 import numpy as np
 import math
@@ -207,6 +207,7 @@ def check_accuracy(loader, model):
 def train(model, optimizer, epochs=5, lr=1e-4):
     model = model.to(device=device)
     for e in range(epochs):
+        optimizer = optim.SGD(model.parameters(), lr=learning_rate)
         for t, (x, y) in enumerate(trainloader):
             model.train()  
             x = x.to(device=device, dtype=torch.float32)  
@@ -229,7 +230,7 @@ def train(model, optimizer, epochs=5, lr=1e-4):
                 
         print(f'accuracy on test')
         #check_accuracy(testloader,model)
-        lr = lr/2
+        lr = lr*0.9
         print(f'learning rate {lr:.10f} at epoch {e}')
         
 
