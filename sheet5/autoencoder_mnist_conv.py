@@ -74,37 +74,7 @@ def init(net):
     if isinstance(net, nn.Linear):
         nn.init.xavier_normal_(net.weight)
         net.bias.data.fill_(0.001)
-
-class Autoencoder_Linear(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.encoder = nn.Sequential(
-            nn.Linear(28*28, 128),
-            nn.ReLU(),
-            nn.Linear(128, 64),
-            nn.ReLU(),
-            nn.Linear(64, 12),
-            nn.ReLU(),
-            nn.Linear(12, 3)
-        )
-        self.encoder.apply(init)
-        self.decoder = nn.Sequential(
-            nn.Linear(3, 12),
-            nn.ReLU(),
-            nn.Linear(12, 64),
-            nn.ReLU(),
-            nn.Linear(64, 128),
-            nn.ReLU(),
-            nn.Linear(128, 28*28),
-            nn.LogSoftmax()
-        )
-        self.decoder.apply(init)
-    def forward(self, x):
-        #x = flatten(x)
-        encoded = self.encoder(x)
-        decoded = self.decoder(encoded)
-        return decoded
-        
+    
 
 class Autoencoder_Conv(nn.Module):
     def __init__(self):
@@ -151,7 +121,7 @@ test_loader = DataLoader(mnist_data_test, batch_size=batch_size, shuffle=True)
 
 # Linear Modul
 #---------------------------------------
-model = Autoencoder_Linear()
+model = Autoencoder_Conv()
 loss_function = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=2e-3, weight_decay=1e-5)
 
@@ -161,7 +131,7 @@ num_epochs = 12
 feed = []
 for epoch in range(num_epochs):
     for (input, _) in train_loader:
-        input = input.reshape(-1, 28*28) #nur für linear
+        #input = input.reshape(-1, 28*28) #nur für linear
         output = model(input)
         loss = loss_function(output, input)
         
@@ -183,14 +153,14 @@ for k in range(0, num_epochs, 4):
     for i, item in enumerate(input):
         if i >= 9: break
         plt.subplot(2, 9, i+1)
-        item = item.reshape(-1, 28,28) # -> use for Autoencoder_Linear
+        #item = item.reshape(-1, 28,28) # -> use for Autoencoder_Linear
         # item: 1, 28, 28
         plt.imshow(item[0])
             
     for i, item in enumerate(output):
         if i >= 9: break
         plt.subplot(2, 9, 9+i+1) # row_length + i + 1
-        item = item.reshape(-1, 28,28) # -> use for Autoencoder_Linear
+        #item = item.reshape(-1, 28,28) # -> use for Autoencoder_Linear
         # item: 1, 28, 28
         plt.imshow(item[0])
 
