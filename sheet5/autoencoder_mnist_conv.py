@@ -71,7 +71,10 @@ def flatten(x):
     return x.view(N, -1)
 
 def init(net):
-    if isinstance(net, nn.Linear):
+    if isinstance(net, nn.Conv2d):
+        nn.init.xavier_normal_(net.weight)
+        net.bias.data.fill_(0.001)
+    if isinstance(net, nn.ConvTranspose2d):
         nn.init.xavier_normal_(net.weight)
         net.bias.data.fill_(0.001)
     
@@ -79,22 +82,20 @@ def init(net):
 class Autoencoder_Conv(nn.Module):
     def __init__(self):
         super().__init__()        
-        # N, 1, 28, 28
         self.encoder = nn.Sequential(
-            nn.Conv2d(1, 16, 3, stride=2, padding=1), # -> N, 16, 14, 14
+            nn.Conv2d(1, 16, 3, stride=2, padding=1), 
             nn.ReLU(),
-            nn.Conv2d(16, 32, 3, stride=2, padding=1), # -> N, 32, 7, 7
+            nn.Conv2d(16, 32, 3, stride=2, padding=1), 
             nn.ReLU(),
-            nn.Conv2d(32, 64, 7) # -> N, 64, 1, 1
+            nn.Conv2d(32, 64, 7) 
         )
-        
-        # N , 64, 1, 1
+
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(64, 32, 7), # -> N, 32, 7, 7
+            nn.ConvTranspose2d(64, 32, 7),
             nn.ReLU(),
-            nn.ConvTranspose2d(32, 16, 3, stride=2, padding=1, output_padding=1), # N, 16, 14, 14 (N,16,13,13 without output_padding)
+            nn.ConvTranspose2d(32, 16, 3, stride=2, padding=1, output_padding=1), 
             nn.ReLU(),
-            nn.ConvTranspose2d(16, 1, 3, stride=2, padding=1, output_padding=1), # N, 1, 28, 28  (N,1,27,27)
+            nn.ConvTranspose2d(16, 1, 3, stride=2, padding=1, output_padding=1),
             nn.Sigmoid()
         )
 
@@ -109,7 +110,7 @@ class Autoencoder_Conv(nn.Module):
 
 # Download Dataset MNIST with DataLoader
 #---------------------------------------
-transform=T.Compose([T.ToTensor(), T.Normalize((0.1307,), (0.3081,))])
+transform=T.ToTensor()
 mnist_data_train = dset.MNIST(root=r'./data', train=True, download=download, transform=transform)
 mnist_data_test = dset.MNIST(root=r'./data', train=False, download=download, transform=transform)
 
