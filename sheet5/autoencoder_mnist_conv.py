@@ -40,20 +40,23 @@ feed = []
 #---------------------------------------------------------
 
 
-def training_loop(model, optimizer, lossfunction, trainloader, epochs, save_checkpoint=True, checkpoint_path = r'./checkpoint'):
+def training_loop(model, optimizer, lossf_coding, lossf_class, trainloader, epochs, save_checkpoint=True, checkpoint_path = r'./checkpoint'):
     model = model.to(device=device)
     for e in range(epochs):
         for i, (input, labels) in enumerate(trainloader):
             input = input.to(device=device)
-            output = model(input)
-            loss = lossfunction(output, input)
-            
+            labels = labels.to(device=device)
+            output, predictions = model(input)
+            loss_coding = lossf_coding(output, input)
+            loss_class = lossf_class(predictions, labels)
+            loss = 0.5 * (loss_coding + loss_class)
+
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
         print(f'Epoch {e+1} ---> Loss = {loss.item():.4f}')
-        feed.append((epochs, input, output))
+        feed.append((epochs, input, output, labels, predictions))
     if save_checkpoint == True:
         torch.save({
             'epoch': epochs,
@@ -61,7 +64,7 @@ def training_loop(model, optimizer, lossfunction, trainloader, epochs, save_chec
             'optimizer_state_dict': optimizer.state_dict(),
             'loss': loss,
             }, checkpoint_path)
-    return print(f'Checkpoint set at Epoch {epochs} with Loss {loss}')
+    print(f'Checkpoint set at Epoch {epochs} with Loss {loss}')
     
  
 
@@ -110,14 +113,35 @@ class Autoencoder_Conv(nn.Module):
             nn.ReLU(),
             nn.ConvTranspose2d(32, 16, 3, stride=2, padding=1, output_padding=1), 
             nn.ReLU(),
-            nn.ConvTranspose2d(16, 1, 3, stride=2, padding=1, output_padding=1),
-            nn.Sigmoid()
+            nn.ConvTranspose2d(16, 1, 3, stride=2, padding=1, output_padding=1)#,
+            #nn.Sigmoid()
         )
+
+        self.classifier = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(64, 24),
+            nn.ReLU(),
+            nn.Linear(24, 10)#,
+            #nn.Softmax(dim=1)
+        )
+
+        self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x):
         encoded = self.encoder(x)
-        decoded = self.decoder(encoded)
-        return decoded
+        classes = self.softmax(encoded)
+        decoded = self.decoder(classes)
+        classed = self.classifier(encoded)
+        return decoded, classed
+    
+'''class encoder(Autoencoder_Conv):
+    def __init__(self):
+        super().__init__()
+        self.encoder = Autoencoder_Conv.encoder()
+
+    def forward(self, x):
+        encoded = self.encoder(x)
+        return encoded
     
 class FC_Classifier(nn.Module):
     def __init__(self):
@@ -128,7 +152,22 @@ class FC_Classifier(nn.Module):
             nn.ReLU(),
             nn.Linear(24, 10),
             nn.LogSoftmax()
-        )
+        )'''
+
+# Combined Models
+#---------------------------------------
+
+'''class Combined_model(nn.Module):
+    def __init__(self, modelA, modelB):
+        super(Combined_model, self).__init__()
+        self.modelA = modelA
+        self.modelB = modelB
+
+    def forward(self, x1, x2):
+        x1 = self.modelA(x1)
+        x2 = self.modelB(x2)
+        x = torch.cat((x1, x2), dim=1)
+        return x'''
 
 #---------------------------------------------------------
 # Main
@@ -149,8 +188,9 @@ test_loader = DataLoader(mnist_data_test, batch_size=batch_size, shuffle=True)
 # Linear Modul
 #---------------------------------------
 model_ = Autoencoder_Conv()
-lossfunction_ = nn.MSELoss()
-optimizer_ = torch.optim.Adam(model_.parameters(), lr=1e-3, weight_decay=1e-5)
+mse_ = nn.MSELoss()
+cross_entropy_= nn.CrossEntropyLoss()
+optimizer_ = torch.optim.Adam(model_.parameters(), lr=2e-3, weight_decay=1e-5)
 num_epochs = 12
 
 # Training der Autoencoders
@@ -159,25 +199,29 @@ num_epochs = 12
 training_loop(
     model=model_, 
     optimizer=optimizer_,
-    lossfunction=lossfunction_,
+    lossf_coding=mse_,
+    lossf_class=cross_entropy_,
     trainloader=train_loader,
     epochs=num_epochs,
     save_checkpoint=True
 )
 
-
 # Plotting
 #---------------------------------------
 for k in range(0, num_epochs, 4):
     plt.figure(figsize=(9, 2))
-    plt.title(f'After Epoch {k}')
+    plt.suptitle(f'After Epoch {k+4}')
     plt.gray()
     feed_plot = feed
     input_plot = feed_plot[k][1].detach().to(device='cpu').numpy()
     output_plot = feed_plot[k][2].detach().to(device='cpu').numpy()
+    labels_plot = feed_plot[k][3].detach().to(device='cpu').numpy()
+    predictions_plot = feed_plot[k][4].detach().to(device='cpu').numpy()
+    predictions_plot = np.argmax(predictions_plot, axis=1)
     for i, item in enumerate(input_plot):
         if i >= 9: break
         plt.subplot(2, 9, i+1)
+        plt.title(labels_plot[i], fontweight='bold')
         #item = item.reshape(-1, 28,28) # -> use for Autoencoder_Linear
         # item: 1, 28, 28
         plt.imshow(item[0])
@@ -185,8 +229,13 @@ for k in range(0, num_epochs, 4):
     for i, item in enumerate(output_plot):
         if i >= 9: break
         plt.subplot(2, 9, 9+i+1) # row_length + i + 1
+        plt.title(predictions_plot[i], fontweight='bold')
         #item = item.reshape(-1, 28,28) # -> use for Autoencoder_Linear
         # item: 1, 28, 28
         plt.imshow(item[0])
 
 plt.show()
+
+
+
+
