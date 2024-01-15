@@ -63,7 +63,7 @@ class Autoencoder_Conv(nn.Module):
 
 # Load Model
 #---------------------------------------
-model = torch.load(r'model_conv_autoencoder_mnist.pth')
+model = torch.load(r'model_conv_autoencoder_mnist.pth', map_location=torch.device('cpu'))
 
 # Create noisy image
 #---------------------------------------
