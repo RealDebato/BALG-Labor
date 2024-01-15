@@ -68,7 +68,7 @@ def training_loop(model, optimizer, lossf_coding, lossf_class, trainloader, epoc
     
  
 
-def load_checkpoint(model, optimizer, checkpoint_path = r'./checkpoint'):      # model und optimizer müssen neu initialisiert werden
+def load_checkpoint(model, optimizer, checkpoint_path = r'checkpoint.pth'):      # model und optimizer müssen neu initialisiert werden
     checkpoint = torch.load(checkpoint_path)
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
@@ -236,6 +236,8 @@ for k in range(0, num_epochs, 4):
 
 plt.show()
 
-
+# Save Model
+#---------------------------------------
+torch.save(model_, r'model_conv_autoencoder_mnist.pth')
 
 
