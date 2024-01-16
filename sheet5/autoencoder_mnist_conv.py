@@ -191,7 +191,7 @@ model_ = Autoencoder_Conv()
 mse_ = nn.MSELoss()
 cross_entropy_= nn.CrossEntropyLoss()
 optimizer_ = torch.optim.Adam(model_.parameters(), lr=2e-3, weight_decay=1e-5)
-num_epochs = 12
+num_epochs = 4
 
 # Training der Autoencoders
 #---------------------------------------
