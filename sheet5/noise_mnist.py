@@ -90,7 +90,7 @@ t_blured_test_img = []
 for i in range(batch_size):
     plot_img = image[i].reshape(28,28,1).numpy()
     test_img.append(plot_img)
-    noise_img = plot_img + np.random.normal(loc=0, scale=0.6, size=(28,28,1))
+    noise_img = plot_img + np.random.normal(loc=0, scale=0.2, size=(28,28,1))
     noise_img = np.where(noise_img>1, 1, noise_img)
     noise_img = np.where(noise_img<0, 0, noise_img)
     t_noise_img = torch.from_numpy(noise_img)
@@ -108,6 +108,7 @@ eval_loader = DataLoader(prepare_for_loader(t_blured_test_img, label),batch_size
 model = torch.load(r'model_conv_autoencoder_mnist.pth', map_location=torch.device('cpu'))
 model.eval()
 denoised = []
+predictions = []
 for i, (image, target) in enumerate(eval_loader):
     image = image.to(torch.float32)
     denoised_img, prediction = model(image)
@@ -115,6 +116,7 @@ for i, (image, target) in enumerate(eval_loader):
     np_denoised_img.astype(np.float32)
     np_denoised_img = np.transpose(np_denoised_img, (0, 2, 3, 1))
     denoised.append(np_denoised_img[0,:])
+    predictions.append(prediction)
 
 
 
@@ -130,6 +132,7 @@ for i, (image, target) in enumerate(eval_loader):
     m_denoised.reshape(28,28,1).detach().numpy()
     denoised.append(m_denoised)'''
     
+#predictions = np.argmax(predictions.numpy(), axis=1)
 
 plt.figure(figsize=(batch_size, 3))
 plt.gray()
@@ -145,7 +148,7 @@ for i in range(batch_size):
 
 for i in range(batch_size):
     plt.subplot(3,batch_size, 2*batch_size+i+1)
-    #plt.title(label[i].numpy(), fontweight='bold')
+    #plt.title(predictions[i], fontweight='bold')
     plt.imshow(denoised[i])
 
 plt.show()
