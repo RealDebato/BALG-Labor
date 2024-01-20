@@ -22,6 +22,7 @@ import time
 
 # Model definition
 #---------------------------------------
+
 class Autoencoder_Conv(nn.Module):
     # Img Size = ((Input Width or Hight - Filtersize + 2xPadding) / Stride) + 1 (bzw. Aufrunden)
     def __init__(self):
@@ -61,9 +62,16 @@ class Autoencoder_Conv(nn.Module):
         classed = self.classifier(encoded)
         return decoded, classed
 
-# Load Model
-#---------------------------------------
-model = torch.load(r'model_conv_autoencoder_mnist.pth', map_location=torch.device('cpu'))
+
+# Functions
+
+def prepare_for_loader(inputs, targets):
+    loader_data = []
+    for i in range(len(inputs)):
+        loader_data.append([inputs[i], targets[i]])
+    return loader_data
+
+
 
 # Create noisy image
 #---------------------------------------
@@ -77,22 +85,68 @@ image, label = next(iter(loader))
 print(image[0].size())
 test_img = []
 blured_test_img = []
+t_blured_test_img = []
 
 for i in range(batch_size):
-    test_img.append(image[i].reshape(28,28,1).numpy())
-    blured_test_img.append(ski.filters.gaussian(image[i].reshape(28,28,1).numpy(), sigma=1))
+    plot_img = image[i].reshape(28,28,1).numpy()
+    test_img.append(plot_img)
+    noise_img = plot_img + np.random.normal(loc=0, scale=0.6, size=(28,28,1))
+    noise_img = np.where(noise_img>1, 1, noise_img)
+    noise_img = np.where(noise_img<0, 0, noise_img)
+    t_noise_img = torch.from_numpy(noise_img)
+    t_noise_img_reshape = t_noise_img.view(1,28,28)
+    blured_test_img.append(noise_img)
+    t_blured_test_img.append(t_noise_img_reshape)
 
-plt.figure(figsize=(batch_size, 2))
+# Create Dataloader for eval
+
+eval_loader = DataLoader(prepare_for_loader(t_blured_test_img, label),batch_size=1, shuffle=False)
+
+
+# Load Model
+#---------------------------------------
+model = torch.load(r'model_conv_autoencoder_mnist.pth', map_location=torch.device('cpu'))
+model.eval()
+denoised = []
+for i, (image, target) in enumerate(eval_loader):
+    image = image.to(torch.float32)
+    denoised_img, prediction = model(image)
+    np_denoised_img = denoised_img.detach().numpy()
+    np_denoised_img.astype(np.float32)
+    np_denoised_img = np.transpose(np_denoised_img, (0, 2, 3, 1))
+    denoised.append(np_denoised_img[0,:])
+
+
+
+'''for noise in blured_test_img:
+    
+    t_noise = torch.from_numpy(noise)
+    print('t from np', t_noise.size())
+    t_noise_reshape = t_noise.view(1, 28, 28)
+    print('reshape', t_noise_reshape.size())
+
+    m_denoised = model(t_noise_reshape)
+    print(m_denoised.size())
+    m_denoised.reshape(28,28,1).detach().numpy()
+    denoised.append(m_denoised)'''
+    
+
+plt.figure(figsize=(batch_size, 3))
 plt.gray()
 for i in range(batch_size):
-    plt.subplot(2,batch_size,i+1)
+    plt.subplot(3,batch_size,i+1)
     plt.title(label[i].numpy(), fontweight='bold')
     plt.imshow(test_img[i])
 
-for i in range(4):
-    plt.subplot(2,batch_size, batch_size+i+1)
+for i in range(batch_size):
+    plt.subplot(3,batch_size, batch_size+i+1)
     #plt.title(label[i].numpy(), fontweight='bold')
     plt.imshow(blured_test_img[i])
+
+for i in range(batch_size):
+    plt.subplot(3,batch_size, 2*batch_size+i+1)
+    #plt.title(label[i].numpy(), fontweight='bold')
+    plt.imshow(denoised[i])
 
 plt.show()
 
